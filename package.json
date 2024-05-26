@@ -1,0 +1,31 @@
+{
+  "name": "@javaabu/js-map-selector",
+  "version": "1.0.0",
+  "description": "JavaScript Google Map input selector",
+  "main": "src/index.js",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Javaabu/js-map-selector.git"
+  },
+  "keywords": [
+    "js",
+    "google-maps",
+    "coordinates",
+    "geography"
+  ],
+  "author": {
+    "name": "Arushad Ahmed",
+    "url": "https://github.com/dash8x"
+  },
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Javaabu/js-map-selector/issues"
+  },
+  "homepage": "https://github.com/Javaabu/js-map-selector#readme"
+}
