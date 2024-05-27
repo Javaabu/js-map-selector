@@ -3,6 +3,8 @@
  */
 
 let config = {
+    iconPrefix: 'fa',
+    iconClass: 'map-selector-icon',
     mapSelector: '.map-selector-map',
     latInput: 'input[name="lat"]',
     lngInput: 'input[name="lng"]',
@@ -14,6 +16,7 @@ let config = {
     disabled: false,
     animate: true,
     pinImage: null,
+    pinIcon: null,
     pinScale: 1.5,
     pinClass: 'map-selector-marker',
     pinBackground: null,
@@ -186,6 +189,13 @@ function mapSelector(elem, mapConfig = {}) {
                 borderColor: mapConfig.pinBorderColor,
                 glyphColor: mapConfig.pinGlyphColor
             });
+
+            if (mapConfig.pinIcon) {
+                const icon = document.createElement('div');
+                icon.innerHTML = `<i class="${mapConfig.iconClass} ${mapConfig.iconPrefix} ${mapConfig.iconPrefix}-${mapConfig.pinIcon}"></i>`;
+
+                pin.glyph = icon;
+            }
 
             pinElem = pin.element;
         }
