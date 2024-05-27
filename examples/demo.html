@@ -8,13 +8,8 @@
           integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
     <style type="text/css">
         /* Location Selector */
-        #location-map {
+        .map-selector-map {
             height: 300px;
-        }
-
-        .map img,
-        #location-map img {
-            max-width: none;
         }
 
         .material-controls {
@@ -28,7 +23,7 @@
             box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
         }
 
-        #location-input {
+        .map-selector-search {
             background-color: #fff;
             font-size: 15px;
             font-weight: 300;
@@ -39,7 +34,7 @@
             width: 90%;
         }
 
-        #location-input:focus {
+        .map-selector-search:focus {
             border-color: var(--bs-primary-border-subtle);
         }
 
@@ -92,18 +87,18 @@
 <body class="bg-light">
 
 <div class="d-flex justify-content-center align-items-center" style="min-height: 100vh">
-    <div class="container">
-        <div class="row offset-lg-3 col-lg-6">
-            <div class="card">
+    <div class="container py-4">
+        <div class="row row-cols-1 row-cols-lg-2 g-4">
+            <div class="col">
+                <div class="card">
                 <div class="card-body py-4">
-
+                    <h4 class="card-title mb-4">Basic Map Selector</h4>
 
                     <div
                         data-map-selector="#location-map"
                         data-lat="4.175804"
                         data-lng="73.509337"
                     >
-
 
                         <div class="row">
                             <div class="col-md-4">
@@ -128,13 +123,77 @@
                             </div>
                         </div>
 
-                        <div class="form-group">
+                        <div class="mt-4">
                             <input id="location-input" class="map-selector-search material-controls" type="text" placeholder="Search...">
                             <div id="location-map" class="map-selector-map bg-light rounded"></div>
                         </div>
 
                     </div>
 
+                </div>
+            </div>
+            </div>
+
+            <div class="col">
+                <div class="card">
+                    <div class="card-body py-4">
+                        <h4 class="card-title mb-4">Disabled Map Selector</h4>
+
+                        <div data-map-selector="true" data-disabled="true">
+
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label class="form-label">Latitude</label>
+                                        <input class="form-control" type="number" name="lat" value="4.175804" step="0.000001"
+                                               min="-90" max="90" placeholder="Latitude" disabled />
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label class="form-label">Longitude</label>
+                                        <input class="form-control" type="number" name="lng" value="73.509337" step="0.000001"
+                                               min="-180" max="180" placeholder="Longitude" disabled />
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="clear-coords" class="form-label">&nbsp;</label>
+                                    <div class="d-grid">
+                                        <button type="button" class="map-selector-clear-btn btn btn-light px-5" disabled>Clear</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mt-4">
+                                <input id="location-input" class="map-selector-search material-controls" type="text" placeholder="Search..." disabled>
+                                <div id="map" class="map-selector-map bg-light rounded"></div>
+                            </div>
+
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <div class="col">
+                <div class="card">
+                    <div class="card-body py-4">
+                        <h4 class="card-title mb-4">Map Display</h4>
+
+                        <div data-map-selector="true"
+                             data-lat="7.084013"
+                             data-lng="72.926863"
+                             data-pin-class="custom-pin"
+                             data-pin-background="#000"
+                             data-pin-border-color="#000"
+                             data-pin-glyph-color="#fff"
+                             data-disabled="true"
+                             data-zoom="13"
+                        >
+                            <div class="map-selector-map bg-light rounded"></div>
+                        </div>
+
+                    </div>
                 </div>
             </div>
         </div>

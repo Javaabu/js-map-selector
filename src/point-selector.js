@@ -7,8 +7,8 @@ let config = {
     latInput: 'input[name="lat"]',
     lngInput: 'input[name="lng"]',
     searchInput: '.map-selector-search',
-    lat: 0,
-    lng: 0,
+    lat: null,
+    lng: null,
     clearBtn: '.map-selector-clear-btn',
     zoom: 14,
     disabled: false,
@@ -78,9 +78,12 @@ function mapSelector(elem, mapConfig = {}) {
     // get the config from the html
     let dataAttrConfig = getDataAtrributeConfigs(elem, config);
 
+    if (dataAttrConfig.mapSelector === 'true') {
+        delete dataAttrConfig.mapSelector;
+    }
+
     // merge all the configs
     mapConfig = {...config, ...mapConfig, ...dataAttrConfig};
-
 
     let map;
     let marker;
@@ -89,6 +92,15 @@ function mapSelector(elem, mapConfig = {}) {
     let latInput = elem.querySelector(mapConfig.latInput);
     let lngInput = elem.querySelector(mapConfig.lngInput);
     let searchInput = elem.querySelector(mapConfig.searchInput);
+
+    // determine the coordinates
+    if (mapConfig.lat === null && latInput) {
+        mapConfig.lat = latInput.value;
+    }
+
+    if (mapConfig.lng === null && lngInput) {
+        mapConfig.lng = lngInput.value;
+    }
 
     const intersectionObserver = new IntersectionObserver((entries) => {
         for (const entry of entries) {
@@ -115,9 +127,11 @@ function mapSelector(elem, mapConfig = {}) {
             mapId: 'DEMO_MAP_ID',
             zoom: mapConfig.zoom,
             center: mapCenter,
+            gestureHandling: mapConfig.disabled ? 'none' : 'auto',
+            clickableIcons: false,
             disableDefaultUI: true,
             streetViewControl: false,
-            zoomControl: true,
+            zoomControl: ! mapConfig.disabled,
             zoomControlOptions: {
                 style: google.maps.ZoomControlStyle.SMALL,
                 position: google.maps.ControlPosition.RIGHT_BOTTOM
@@ -132,7 +146,7 @@ function mapSelector(elem, mapConfig = {}) {
         marker = createMarker(mapCenter, AdvancedMarkerElement, PinElement);
 
         // setup search box
-        if (searchInput && (! mapConfig.disabled)) {
+        if (searchInput) {
             setupSearchBox(SearchBox);
         }
 
@@ -198,38 +212,40 @@ function mapSelector(elem, mapConfig = {}) {
         // Create the search box and link it to the UI element.
         map.controls[google.maps.ControlPosition.TOP_LEFT].push(searchInput);
 
-        let searchBox = new SearchBox(searchInput);
+        if (! mapConfig.disabled) {
+            let searchBox = new SearchBox(searchInput);
 
-        // Listen for the event fired when the user selects an item from the
-        // pick list. Retrieve the matching places for that item.
-        searchBox.addListener('places_changed', function () {
-            let place = searchBox.getPlaces();
+            // Listen for the event fired when the user selects an item from the
+            // pick list. Retrieve the matching places for that item.
+            searchBox.addListener('places_changed', function () {
+                let place = searchBox.getPlaces();
 
-            if (place === undefined || place.length < 1) {
-                return;
-            }
+                if (place === undefined || place.length < 1) {
+                    return;
+                }
 
-            place = place[0];
+                place = place[0];
 
-            // Get place name, and location.
-            let bounds = new google.maps.LatLngBounds();
+                // Get place name, and location.
+                let bounds = new google.maps.LatLngBounds();
 
-            // Move marker to place.
-            marker.position = place.geometry.location;
-            bounds.extend(place.geometry.location);
-            map.fitBounds(bounds);
-            map.setZoom(16);
+                // Move marker to place.
+                marker.position = place.geometry.location;
+                bounds.extend(place.geometry.location);
+                map.fitBounds(bounds);
+                map.setZoom(16);
 
-            // update coordinates
-            updateInputs(place.geometry.location);
-        });
+                // update coordinates
+                updateInputs(place.geometry.location);
+            });
 
-        // Bias the SearchBox results towards places that are within the bounds of the
-        // current map's viewport.
-        google.maps.event.addListener(map, 'bounds_changed', function () {
-            var bounds = map.getBounds();
-            searchBox.setBounds(bounds);
-        });
+            // Bias the SearchBox results towards places that are within the bounds of the
+            // current map's viewport.
+            google.maps.event.addListener(map, 'bounds_changed', function () {
+                var bounds = map.getBounds();
+                searchBox.setBounds(bounds);
+            });
+        }
     }
 
     /**
