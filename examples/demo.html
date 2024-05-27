@@ -182,15 +182,35 @@
             <div class="col">
                 <div class="card">
                     <div class="card-body py-4">
-                        <h4 class="card-title mb-4">Map Display</h4>
+                        <h4 class="card-title mb-4">Map Display Customized Pin Color</h4>
 
                         <div data-map-selector="true"
                              data-lat="7.084013"
                              data-lng="72.926863"
                              data-pin-class="custom-pin"
+                             data-pin-scale="2"
                              data-pin-background="#000"
                              data-pin-border-color="#000"
                              data-pin-glyph-color="#fff"
+                             data-disabled="true"
+                             data-zoom="13"
+                        >
+                            <div class="map-selector-map bg-light rounded"></div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <div class="col">
+                <div class="card">
+                    <div class="card-body py-4">
+                        <h4 class="card-title mb-4">Map Display Image Pin</h4>
+
+                        <div data-map-selector="true"
+                             data-lat="7.084013"
+                             data-lng="72.926863"
+                             data-pin-image="./img/map-marker.png"
                              data-disabled="true"
                              data-zoom="13"
                         >

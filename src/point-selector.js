@@ -13,6 +13,7 @@ let config = {
     zoom: 14,
     disabled: false,
     animate: true,
+    pinImage: null,
     pinScale: 1.5,
     pinClass: 'map-selector-marker',
     pinBackground: null,
@@ -173,16 +174,26 @@ function mapSelector(elem, mapConfig = {}) {
      * @param PinElement
      */
     function createMarker(coordinates, AdvancedMarkerElement, PinElement) {
-        const pin = new PinElement({
-            scale: mapConfig.pinScale,
-            background: mapConfig.pinBackground,
-            borderColor: mapConfig.pinBorderColor,
-            glyphColor: mapConfig.pinGlyphColor
-        });
+        let pinElem = null;
+
+        if (mapConfig.pinImage) {
+            pinElem = document.createElement('img');
+            pinElem.src = mapConfig.pinImage;
+        } else {
+            const pin = new PinElement({
+                scale: mapConfig.pinScale,
+                background: mapConfig.pinBackground,
+                borderColor: mapConfig.pinBorderColor,
+                glyphColor: mapConfig.pinGlyphColor
+            });
+
+            pinElem = pin.element;
+        }
+
 
         marker = new AdvancedMarkerElement({
             map: map,
-            content: pin.element,
+            content: pinElem,
             position: coordinates,
             gmpDraggable: !mapConfig.disabled,
         });
