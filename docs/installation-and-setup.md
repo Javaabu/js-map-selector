@@ -19,7 +19,7 @@ import * as mapSelector from '@javaabu/js-map-selector';
 mapSelector.init();
 ```
 
-Note that this package requires [Google Maps JavaScript API](https://developers.google.com/maps/documentation/javascript) with a Google Maps API key that has access to the Maps JavaScript API and the Places API. So, make sure to include the Google Maps library on your page like so:
+Note that this package requires [Google Maps JavaScript API](https://developers.google.com/maps/documentation/javascript) with a [Google Maps API key](https://console.cloud.google.com/google/maps-apis/home) that has access to the Maps JavaScript API and the Places API. So, make sure to include the Google Maps library on your page like so:
 
 ```html
 <script>
