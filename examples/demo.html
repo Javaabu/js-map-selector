@@ -42,6 +42,51 @@
         #location-input:focus {
             border-color: var(--bs-primary-border-subtle);
         }
+
+        /**
+        Marker Animation
+         */
+        @keyframes drop {
+            0% {
+                transform: translateY(-200px) scaleY(0.9);
+                opacity: 0;
+            }
+            5% {
+                opacity: 0.7;
+            }
+            50% {
+                transform: translateY(0px) scaleY(1);
+                opacity: 1;
+            }
+            65% {
+                transform: translateY(-17px) scaleY(0.9);
+                opacity: 1;
+            }
+            75% {
+                transform: translateY(-22px) scaleY(0.9);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(0px) scaleY(1);
+                opacity: 1;
+            }
+        }
+
+        .drop {
+            animation: drop 0.3s linear forwards var(--delay-time);
+        }
+
+        /**
+            Marker Styling
+         */
+        .map-selector-marker path[class*="maps-pin-view-background"],
+        .map-selector-marker path[class*="maps-pin-view-border"] {
+            fill: var(--bs-primary);
+        }
+
+        .map-selector-marker path[class*="maps-pin-view-default-glyph"] {
+            fill: var(--bs-white);
+        }
     </style>
 </head>
 <body class="bg-light">
@@ -52,32 +97,42 @@
             <div class="card">
                 <div class="card-body py-4">
 
-                    <div class="row">
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label for="lat" class="form-label">Latitude</label>
-                                <input class="form-control" type="number" id="lat" value="4.175804" step="0.000001"
-                                       min="-90" max="90" placeholder="Latitude"/>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label for="lng" class="form-label">Longitude</label>
-                                <input class="form-control" type="number" id="lng" value="73.509337" step="0.000001"
-                                       min="-180" max="180" placeholder="Longitude"/>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <label for="clear-coords" class="form-label">&nbsp;</label>
-                            <div class="d-grid">
-                                <button type="button" class="btn btn-light px-5" id="clear-coords">Clear</button>
-                            </div>
-                        </div>
-                    </div>
 
-                    <div class="form-group">
-                        <input id="location-input" class="material-controls" type="text" placeholder="Search...">
-                        <div id="location-map" class="bg-light rounded"></div>
+                    <div
+                        data-map-selector="#location-map"
+                        data-lat="4.175804"
+                        data-lng="73.509337"
+                    >
+
+
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="lat" class="form-label">Latitude</label>
+                                    <input class="form-control" type="number" id="lat" name="lat" value="4.175804" step="0.000001"
+                                           min="-90" max="90" placeholder="Latitude"/>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="lng" class="form-label">Longitude</label>
+                                    <input class="form-control" type="number" id="lng" name="lng" value="73.509337" step="0.000001"
+                                           min="-180" max="180" placeholder="Longitude"/>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="clear-coords" class="form-label">&nbsp;</label>
+                                <div class="d-grid">
+                                    <button type="button" class="map-selector-clear-btn btn btn-light px-5" id="clear-coords">Clear</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <input id="location-input" class="map-selector-search material-controls" type="text" placeholder="Search...">
+                            <div id="location-map" class="map-selector-map bg-light rounded"></div>
+                        </div>
+
                     </div>
 
                 </div>
@@ -86,10 +141,20 @@
     </div>
 </div>
 
+<!-- Used only for demo purposes. Remove this line. -->
+<script src="./api-key.js"></script>
+
+<script>
+    (g=>{var h,a,k,p='The Google Maps JavaScript API',c='google',l='importLibrary',q='__ib__',m=document,b=window;b=b[c]||(b[c]={});var d=b.maps||(b.maps={}),r=new Set,e=new URLSearchParams,u=()=>h||(h=new Promise(async(f,n)=>{await (a=m.createElement('script'));e.set('libraries',[...r]+'');for(k in g)e.set(k.replace(/[A-Z]/g,t=>'_'+t[0].toLowerCase()),g[k]);e.set('callback',c+'.maps.'+q);a.src=`https://maps.${c}apis.com/maps/api/js?`+e;d[q]=f;a.onerror=()=>h=n(Error(p+' could not load.'));a.nonce=m.querySelector('script[nonce]')?.nonce||'';m.head.append(a)}));d[l]?console.warn(p+' only loads once. Ignoring:',g):d[l]=(f,...n)=>r.add(f)&&u().then(()=>d[l](f,...n))})({
+        key: API_KEY, // replace with your own api key
+        v: 'weekly',
+    });
+</script>
+
 <script type="module">
     import { pointSelector } from '../src/index.js';
 
-    pointSelector.bind();
+    pointSelector.init();
 </script>
 
 </body>
