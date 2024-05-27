@@ -22,3 +22,5 @@ This package is currently under development. If anything works, that's a surpris
     <div class="map-selector-map bg-light rounded"></div>
 </div>
 ```
+
+See a demo of this package in action [here](https://js-map-selector.demo.mv/).

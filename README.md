@@ -12,6 +12,8 @@
 </div>
 ```
 
+See a demo of this package in action [here](https://js-map-selector.demo.mv/).
+
 ## Documentation
 
 You'll find the documentation on [https://docs.javaabu.com/docs/js-map-selector](https://docs.javaabu.com/docs/js-map-selector).
