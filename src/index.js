@@ -60,6 +60,168 @@ function degreeToRadians(degree) {
 }
 
 /**
+ * Convert coordinates to cartesian
+ * @param lat
+ * @param lng
+ * @returns {{x: number, y: number, z: number}}
+ */
+function toCartesian(lat, lng) {
+    const phi = degreeToRadians(lat); // Latitude in radians
+    const theta = degreeToRadians(lng); // Longitude in radians
+
+    const x = EARTH_RADIUS * Math.cos(phi) * Math.cos(theta);
+    const y = EARTH_RADIUS * Math.cos(phi) * Math.sin(theta);
+    const z = EARTH_RADIUS * Math.sin(phi);
+
+    return { x, y, z };
+}
+
+/**
+ * Calculate vectors between points
+ * @param A
+ * @param B
+ * @returns {{x: number, y: number, z: number}}
+ */
+function vector(A, B) {
+    return {
+        x: B.x - A.x,
+        y: B.y - A.y,
+        z: B.z - A.z
+    };
+}
+
+/**
+ * Dot product of vectors
+ *
+ * @param v1
+ * @param v2
+ * @returns {number}
+ */
+function dotProduct(v1, v2) {
+    return v1.x * v2.x + v1.y * v2.y + v1.z * v2.z;
+}
+
+/**
+ * Magnitude of vectors
+ * @param v
+ * @returns {number}
+ */
+function magnitude(v) {
+    return Math.sqrt((v.x * v.x) + (v.y * v.y) + (v.z * v.z));
+}
+
+/**
+ * Angle between vectors in degrees
+ * @param v1
+ * @param v2
+ * @returns {number}
+ */
+function angleBetweenVectors(v1, v2) {
+    const dot = dotProduct(v1, v2);
+    const mag1 = magnitude(v1);
+    const mag2 = magnitude(v2);
+    const cosTheta = dot / (mag1 * mag2);
+    return Math.acos(cosTheta) * (180 / Math.PI); // Convert from radians to degrees
+}
+
+/**
+ * Angle between 3 points
+ *
+ * @param lat1
+ * @param lon1
+ * @param lat2
+ * @param lon2
+ * @param lat3
+ * @param lon3
+ * @returns {number}
+ */
+function angleBetweenThreePoints(lat1, lon1, lat2, lon2, lat3, lon3) {
+    const A = toCartesian(lat1, lon1);
+    const B = toCartesian(lat2, lon2);
+    const C = toCartesian(lat3, lon3);
+
+    const BA = vector(B, A);
+    const BC = vector(B, C);
+
+    return angleBetweenVectors(BA, BC);
+}
+
+/**
+ * Find where to insert new vertex
+ */
+function findVertexInsertionIndex(point, path) {
+    // find the closest vertex
+    let closestVertexIndex = findClosestVertex(point, path);
+
+    // abort if null
+    if (closestVertexIndex === null) {
+        return closestVertexIndex;
+    }
+
+    // just 1 vertex, so it must
+    // be the insertion point
+    if (path.getLength() < 2) {
+        return closestVertexIndex;
+    }
+
+    // get the index of the next vertex
+    let nextVertexIndex = (closestVertexIndex + 1) % path.getLength();
+    let prevVertexIndex = closestVertexIndex > 0 ? closestVertexIndex - 1 : (path.getLength() - 1);
+    
+    let nextVertex = path.getAt(nextVertexIndex);
+    let prevVertex = path.getAt(prevVertexIndex);
+    let closestVertex = path.getAt(closestVertexIndex);
+
+    // https://math.stackexchange.com/questions/3485915/check-if-a-point-can-intersect-a-line-at-perpendicular
+    // calculate angle point, closest, prev
+    let pointClosestPrevAngle = angleBetweenThreePoints(
+        point.lat(),
+        point.lng(),
+        closestVertex.lat(),
+        closestVertex.lng(),
+        prevVertex.lat(),
+        prevVertex.lng()
+    );
+
+    // calculate angle of point, prev, closest
+    let pointPrevClosestAngle = angleBetweenThreePoints(
+        point.lat(),
+        point.lng(),
+        prevVertex.lat(),
+        prevVertex.lng(),
+        closestVertex.lat(),
+        closestVertex.lng()
+    );
+
+    // calculate angle point, closest, next
+    let pointClosestNextAngle = angleBetweenThreePoints(
+        point.lat(),
+        point.lng(),
+        closestVertex.lat(),
+        closestVertex.lng(),
+        nextVertex.lat(),
+        nextVertex.lng()
+    );
+
+    // calculate angle of point, next, closest
+    let pointNextClosestAngle = angleBetweenThreePoints(
+        point.lat(),
+        point.lng(),
+        nextVertex.lat(),
+        nextVertex.lng(),
+        closestVertex.lat(),
+        closestVertex.lng()
+    );
+
+    if (pointPrevClosestAngle > 90 || pointClosestPrevAngle > 90 && ! (pointClosestNextAngle > 90 || pointNextClosestAngle > 90)) {
+        return nextVertexIndex;
+    }
+
+    // if next is closer, insert before it
+    return closestVertexIndex;
+}
+
+/**
  * Find the index of the closest vertex from the given path
  */
 function findClosestVertex(point, path) {
@@ -385,7 +547,7 @@ function mapSelector(elem, mapConfig = {}) {
                 let path = polygon.getPath();
 
                 // find the closest vertex
-                let closestVertex = findClosestVertex(evt.latLng, path);
+                let closestVertex = findVertexInsertionIndex(evt.latLng, path);
                 path.insertAt(closestVertex, evt.latLng);
 
                 polygon.setPath(path);
