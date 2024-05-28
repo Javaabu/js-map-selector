@@ -2,6 +2,14 @@
  * Point Selector
  */
 
+// number of km per degree = ~111km (111.32 in google maps, but range varies
+// between 110.567km at the equator and 111.699km at the poles)
+//
+// 111.32km = 111320.0m (".0" is used to make sure the result of division is
+// double even if the "meters" variable can't be explicitly declared as double)
+const EARTH_COEFFICIENT = 111320.0; // m
+const EARTH_RADIUS = 6371; // km
+
 let config = {
     iconPrefix: 'fa',
     iconClass: 'map-selector-icon',
@@ -12,6 +20,7 @@ let config = {
     lat: null,
     lng: null,
     radius: null,
+    polygon: null,
     clearBtn: '.map-selector-clear-btn',
     zoom: 14,
     disabled: false,
@@ -32,8 +41,121 @@ let config = {
     circleStrokeOpacity: 0.8,
     circleStrokeWeight: 3,
     circleFillColor: '#FF5722',
-    circleFillOpacity: 0.2
+    circleFillOpacity: 0.2,
+    enablePolygon: false,
+    polygonRadius: 10, // in meters
+    polygonInput: '.map-selector-polygon',
+    polygonStrokeColor: '#FF5722',
+    polygonStrokeOpacity: 0.8,
+    polygonStrokeWeight: 3,
+    polygonFillColor: '#FF5722',
+    polygonFillOpacity: 0.2,
 };
+
+/**
+ * Convert degree to radius
+ */
+function degreeToRadians(degree) {
+    return degree * (Math.PI / 180)
+}
+
+/**
+ * Find the index of the closest vertex from the given path
+ */
+function findClosestVertex(point, path) {
+    // no vertexes, so abort
+    if (path.getLength() < 1) {
+        return null;
+    }
+
+    let closestIndex = 0;
+    let closestDistance = null;
+
+    // just 1 vertex, so it must be the closest
+    if (path.getLength() < 2) {
+        return closestIndex;
+    }
+
+    path.forEach(function (vertex, index) {
+       // calculate the distance to the vertex
+       let distance = calculateDistance({
+           lat: point.lat(),
+           lng: point.lng()
+       }, {
+           lat: vertex.lat(),
+           lng: vertex.lng()
+       });
+
+       if (closestDistance === null || distance < closestDistance) {
+           closestDistance = distance;
+           closestIndex = index;
+       }
+    });
+
+    return closestIndex;
+}
+
+/**
+ * Calculate the distance between 2 points
+ * https://stackoverflow.com/questions/27928/calculate-distance-between-two-latitude-longitude-points-haversine-formula
+ */
+function calculateDistance(coord_1, coord_2) {
+    let deltaLat = degreeToRadians(coord_2.lat - coord_1.lat);
+    let deltaLng = degreeToRadians(coord_2.lng - coord_1.lng);
+    let a =
+        Math.sin(deltaLat/2) * Math.sin(deltaLat/2) +
+        Math.cos(degreeToRadians(coord_1.lat)) * Math.cos(degreeToRadians(coord_2.lat)) *
+        Math.sin(deltaLng/2) * Math.sin(deltaLng/2);
+
+    let c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return EARTH_RADIUS * c; // Distance in km
+}
+
+/**
+ * Add or subtract meters to latitude
+ * https://stackoverflow.com/questions/7477003/calculating-new-longitude-latitude-from-old-n-meters
+ */
+function calculateLatitude(lat, lng, distance, operation) {
+    let delta = distance / EARTH_COEFFICIENT;
+
+    return operation === '-' ? lat - delta : lat + delta;
+}
+
+/**
+ * Add or subtract meters to longitude
+ * https://stackoverflow.com/questions/7477003/calculating-new-longitude-latitude-from-old-n-meters
+ */
+function calculateLongitude(lat, lng, distance, operation) {
+    let delta = (distance / EARTH_COEFFICIENT) / Math.cos(degreeToRadians(lat));
+
+    return operation === '-' ? lng - delta : lng + delta;
+}
+
+/**
+ * Create square from coordinates
+ */
+function createDefaultPolygonPath(lat, lng, radius) {
+    return [
+        {'lat': calculateLatitude(lat, lng, radius, '+'), 'lng': calculateLongitude(lat, lng, radius, '-')}, // top left
+        {'lat': calculateLatitude(lat, lng, radius, '+'), 'lng': calculateLongitude(lat, lng, radius, '+')}, // top right
+        {'lat': calculateLatitude(lat, lng, radius, '-'), 'lng': calculateLongitude(lat, lng, radius, '+')}, // bottom right
+        {'lat': calculateLatitude(lat, lng, radius, '-'), 'lng': calculateLongitude(lat, lng, radius, '-')}, // bottom left
+    ];
+}
+
+/**
+ * Get polygon bounds
+ * https://stackoverflow.com/questions/24401240/how-to-get-latlngbounds-of-feature-polygon-geometry-in-google-maps-v3
+ */
+function getPolygonBounds(polygon) {
+    let bounds = new google.maps.LatLngBounds();
+
+    polygon.getPath().forEach(function(latlng){
+        bounds.extend(latlng);
+    });
+
+    return bounds;
+}
 
 /**
  * Checks if a radius
@@ -63,6 +185,13 @@ function isValidLongitude(lng) {
  */
 function isValidCoordinate(lat, lng) {
     return isValidLatitude(lat) && isValidLongitude(lng);
+}
+
+/**
+ * Checks if a given polygon string is valid
+ */
+function isValidPolygonWkt(wkt) {
+    return false;
 }
 
 /**
@@ -121,26 +250,35 @@ function mapSelector(elem, mapConfig = {}) {
     let map;
     let marker;
     let circle;
+    let polygon;
     let geocoder;
     let shouldUpdateCoordinateInput = true;
     let shouldUpdateRadiusInput = true;
+    let shouldUpdatePolygonInput = true;
     let clearBtn = elem.querySelector(mapConfig.clearBtn);
     let latInput = elem.querySelector(mapConfig.latInput);
     let lngInput = elem.querySelector(mapConfig.lngInput);
     let radiusInput = elem.querySelector(mapConfig.radiusInput);
+    let polygonInput = elem.querySelector(mapConfig.polygonInput);
     let searchInput = elem.querySelector(mapConfig.searchInput);
 
     // determine the values
-    if (mapConfig.lat === null && latInput && isValidLatitude(latInput.value)) {
-        mapConfig.lat = latInput.value;
+    if (mapConfig.lat === null) {
+        mapConfig.lat = latInput && isValidLatitude(latInput.value) ? Number(latInput.value) : 0;
     }
 
-    if (mapConfig.lng === null && lngInput && isValidLongitude(lngInput.value)) {
-        mapConfig.lng = lngInput.value;
+    if (mapConfig.lng === null) {
+        mapConfig.lng = lngInput && isValidLongitude(lngInput.value) ? Number(lngInput.value) : 0;
     }
 
-    if (mapConfig.radius === null && radiusInput && isValidRadius(radiusInput.value)) {
-        mapConfig.radius = Number(radiusInput.value);
+    if (mapConfig.radius === null) {
+        mapConfig.radius = radiusInput && isValidRadius(radiusInput.value) ? Number(radiusInput.value) : 1;
+    }
+
+    if (mapConfig.polygon === null) {
+        mapConfig.polygon = polygonInput && isValidPolygonWkt(polygonInput.value) ?
+            polygonInput.value :
+            createDefaultPolygonPath(mapConfig.lat, mapConfig.lng, mapConfig.polygonRadius);
     }
 
     const intersectionObserver = new IntersectionObserver((entries) => {
@@ -197,11 +335,76 @@ function mapSelector(elem, mapConfig = {}) {
             circle = createCircle(mapCenter);
         }
 
+        if (mapConfig.enablePolygon) {
+            polygon = createPolygon(mapCenter);
+        }
+
         if (! mapConfig.disabled) {
             addInputEventListeners();
         }
     }
 
+    /**
+     * Create polygon
+     *
+     * @param coordinates
+     */
+    function createPolygon(coordinates) {
+        polygon = new google.maps.Polygon({
+            paths: mapConfig.polygon,
+            center: coordinates,
+            map: map,
+            strokeColor: mapConfig.polygonStrokeColor,
+            strokeOpacity: mapConfig.polygonStrokeOpacity,
+            strokeWeight: mapConfig.polygonStrokeWeight,
+            fillColor: mapConfig.polygonFillColor,
+            fillOpacity: mapConfig.polygonFillOpacity,
+            draggable: ! mapConfig.disabled,
+            editable: ! mapConfig.disabled
+        });
+
+        map.fitBounds(getPolygonBounds(polygon));
+
+        if (! mapConfig.disabled) {
+            // delete vertex on double click
+            google.maps.event.addListener(polygon, 'dblclick', function (evt) {
+                if (evt.vertex !== undefined) {
+                    let path = polygon.getPath();
+
+                    // remove the vertex from the path
+                    // only if it is not going to result in a line
+                    if (path.getLength() > 3) {
+                        path.removeAt(evt.vertex);
+                        polygon.setPath(path);
+                    }
+                }
+            });
+
+            // add vertex on map clicked
+            google.maps.event.addListener(map, 'click', function (evt) {
+                let path = polygon.getPath();
+
+                // find the closest vertex
+                let closestVertex = findClosestVertex(evt.latLng, path);
+                path.insertAt(closestVertex, evt.latLng);
+
+                polygon.setPath(path);
+            });
+        }
+
+        /*google.maps.event.addListener(circle, 'center_changed', function (evt) {
+            updateMarkerPosition(circle.center);
+            updateCoordinateInputs(circle.center);
+            updateSearchInput(circle.center);
+        });
+
+        google.maps.event.addListener(circle, 'radius_changed', function (evt) {
+            updateRadiusInputs(circle.radius);
+        });*/
+
+        return polygon;
+    }
+    
     /**
      * Create circle
      *
@@ -386,6 +589,10 @@ function mapSelector(elem, mapConfig = {}) {
         if (radiusInput && mapConfig.enableRadius) {
             radiusInput.addEventListener('input', updateMapFromInputs);
         }
+
+        if (polygonInput && mapConfig.enablePolygon) {
+            polygonInput.addEventListener('input', updateMapFromInputs);
+        }
     }
 
     /**
@@ -519,12 +726,16 @@ function mapSelector(elem, mapConfig = {}) {
         if (radiusInput) {
             radiusInput.value = '';
         }
+
+        if (polygonInput) {
+            polygonInput.value = '';
+        }
     }
 
     /**
      * Clear map
      */
-    if (clearBtn) {
+    if (clearBtn && (! mapConfig.disabled)) {
         clearBtn.addEventListener('click', clearInputs);
     }
 

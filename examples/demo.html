@@ -107,27 +107,111 @@
             <div class="col">
                 <div class="card">
                     <div class="card-body py-4">
+                        <h4 class="card-title mb-4">Polygon Map Selector</h4>
+
+                        <div data-map-selector="true" data-enable-polygon="true">
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-4">
+                                        <label class="form-label">Latitude</label>
+                                        <input class="form-control map-selector-lat" type="number" name="lat" value="4.175804" step="0.000001"
+                                               min="-90" max="90" placeholder="Latitude"/>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-4">
+                                        <label class="form-label">Longitude</label>
+                                        <input class="form-control map-selector-lng" type="number" name="lng" value="73.509337" step="0.000001"
+                                               min="-180" max="180" placeholder="Longitude"/>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="form-label">Polygon</label>
+                                <textarea class="form-control map-selector-polygon" name="polygon" placeholder="Polygon"></textarea>
+                            </div>
+
+                            <button type="button" class="map-selector-clear-btn btn btn-light">Clear</button>
+
+                            <div class="mt-4">
+                                <input class="map-selector-search material-controls" type="text" placeholder="Search..." />
+                                <div class="map-selector-map bg-light rounded"></div>
+                            </div>
+
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <div class="col">
+                <div class="card">
+                    <div class="card-body py-4">
+                        <h4 class="card-title mb-4">Polygon Map Selector Disabled</h4>
+
+                        <div data-map-selector="true" data-enable-polygon="true" data-disabled="true">
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-4">
+                                        <label class="form-label">Latitude</label>
+                                        <input class="form-control map-selector-lat" type="number" name="lat" value="4.175804" step="0.000001"
+                                               min="-90" max="90" placeholder="Latitude" disabled />
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-4">
+                                        <label class="form-label">Longitude</label>
+                                        <input class="form-control map-selector-lng" type="number" name="lng" value="73.509337" step="0.000001"
+                                               min="-180" max="180" placeholder="Longitude" disabled />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="form-label">Polygon</label>
+                                <textarea class="form-control map-selector-polygon" name="polygon" placeholder="Polygon" disabled></textarea>
+                            </div>
+
+                            <button type="button" class="map-selector-clear-btn btn btn-light">Clear</button>
+
+                            <div class="mt-4">
+                                <input class="map-selector-search material-controls" type="text" placeholder="Search..." disabled />
+                                <div class="map-selector-map bg-light rounded"></div>
+                            </div>
+
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <div class="col">
+                <div class="card">
+                    <div class="card-body py-4">
                         <h4 class="card-title mb-4">Radius Map Selector</h4>
 
                         <div data-map-selector="true" data-enable-radius="true">
 
                             <div class="row">
                                 <div class="col-md-3">
-                                    <div class="form-group">
+                                    <div class="mb-4">
                                         <label class="form-label">Latitude</label>
                                         <input class="form-control map-selector-lat" type="number" name="lat" value="4.175804" step="0.000001"
                                                min="-90" max="90" placeholder="Latitude"/>
                                     </div>
                                 </div>
                                 <div class="col-md-3">
-                                    <div class="form-group">
+                                    <div class="mb-4">
                                         <label class="form-label">Longitude</label>
                                         <input class="form-control map-selector-lng" type="number" name="lng" value="73.509337" step="0.000001"
                                                min="-180" max="180" placeholder="Longitude"/>
                                     </div>
                                 </div>
                                 <div class="col-md-3">
-                                    <div class="form-group">
+                                    <div class="mb-4">
                                         <label class="form-label">Radius (Meters)</label>
                                         <input class="form-control map-selector-radius" type="number" name="radius" value="200" step="1"
                                                min="0" max="40000000" placeholder="Radius"/>
@@ -161,21 +245,21 @@
 
                             <div class="row">
                                 <div class="col-md-3">
-                                    <div class="form-group">
+                                    <div class="mb-4">
                                         <label class="form-label">Latitude</label>
                                         <input class="form-control map-selector-lat" type="number" name="lat" value="4.175804" step="0.000001"
                                                min="-90" max="90" placeholder="Latitude" disabled />
                                     </div>
                                 </div>
                                 <div class="col-md-3">
-                                    <div class="form-group">
+                                    <div class="mb-4">
                                         <label class="form-label">Longitude</label>
                                         <input class="form-control map-selector-lng" type="number" name="lng" value="73.509337" step="0.000001"
                                                min="-180" max="180" placeholder="Longitude" disabled />
                                     </div>
                                 </div>
                                 <div class="col-md-3">
-                                    <div class="form-group">
+                                    <div class="mb-4">
                                         <label class="form-label">Radius (Km)</label>
                                         <input class="form-control map-selector-radius" type="number" name="radius" value="1" step="1"
                                                min="0" max="40000000" placeholder="Radius" disabled />
@@ -217,7 +301,7 @@
 
                             <div class="row">
                                 <div class="col-md-9">
-                                    <div class="form-group">
+                                    <div class="mb-4">
                                         <label class="form-label">Radius (Km)</label>
                                         <input class="form-control map-selector-radius" type="number" name="radius" value="5" step="0.001"
                                                min="0" max="40000000" placeholder="Radius"/>
@@ -255,14 +339,14 @@
 
                         <div class="row">
                             <div class="col-md-4">
-                                <div class="form-group">
+                                <div class="mb-4">
                                     <label for="lat" class="form-label">Latitude</label>
                                     <input class="form-control map-selector-lat" type="number" id="lat" name="lat" value="4.175804" step="0.000001"
                                            min="-90" max="90" placeholder="Latitude"/>
                                 </div>
                             </div>
                             <div class="col-md-4">
-                                <div class="form-group">
+                                <div class="mb-4">
                                     <label for="lng" class="form-label">Longitude</label>
                                     <input class="form-control map-selector-lng" type="number" id="lng" name="lng" value="73.509337" step="0.000001"
                                            min="-180" max="180" placeholder="Longitude"/>
@@ -296,14 +380,14 @@
 
                             <div class="row">
                                 <div class="col-md-4">
-                                    <div class="form-group">
+                                    <div class="mb-4">
                                         <label class="form-label">Latitude</label>
                                         <input class="form-control map-selector-lat" type="number" name="lat" value="4.175804" step="0.000001"
                                                min="-90" max="90" placeholder="Latitude" disabled />
                                     </div>
                                 </div>
                                 <div class="col-md-4">
-                                    <div class="form-group">
+                                    <div class="mb-4">
                                         <label class="form-label">Longitude</label>
                                         <input class="form-control map-selector-lng" type="number" name="lng" value="73.509337" step="0.000001"
                                                min="-180" max="180" placeholder="Longitude" disabled />
