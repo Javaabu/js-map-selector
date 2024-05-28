@@ -510,7 +510,8 @@
 </script>
 
 <script type="module">
-    import * as mapSelector from '../src/index.js';
+    // cache busted loading for demo purposes only
+    let mapSelector = await import('../src/index.js?v=' + Math.random());
 
     mapSelector.init();
 </script>
