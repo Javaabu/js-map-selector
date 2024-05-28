@@ -6,11 +6,12 @@ let config = {
     iconPrefix: 'fa',
     iconClass: 'map-selector-icon',
     mapSelector: '.map-selector-map',
-    latInput: 'input[name="lat"]',
-    lngInput: 'input[name="lng"]',
+    latInput: 'input.map-selector-lat',
+    lngInput: 'input.map-selector-lng',
     searchInput: '.map-selector-search',
     lat: null,
     lng: null,
+    radius: null,
     clearBtn: '.map-selector-clear-btn',
     zoom: 14,
     disabled: false,
@@ -22,18 +23,45 @@ let config = {
     pinBackground: null,
     pinBorderColor: null,
     pinGlyphColor: null,
+    enableRadius: false,
+    radiusInput: 'input.map-selector-radius',
+    radiusUnit: 'm', // m or km
+    radiusPrecision: 0,
+    circleStrokeColor: '#FF5722',
+    circleStrokeOpacity: 0.8,
+    circleStrokeWeight: 3,
+    circleFillColor: '#FF5722',
+    circleFillOpacity: 0.2
 };
 
 /**
- * checks if a given coordinate is in the correct format
+ * Checks if a radius
  */
-function isValidCoordinate(lat, lon) {
-    let ck_lat = /^(-?[1-8]?\d(?:\.\d{1,18})?|90(?:\.0{1,18})?)$/;
-    let ck_lon = /^(-?(?:1[0-7]|[1-9])?\d(?:\.\d{1,18})?|180(?:\.0{1,18})?)$/;
-    let validLat = ck_lat.test(lat);
-    let validLon = ck_lon.test(lon);
+function isValidRadius(radius) {
+    return (! isNaN(radius)) && Number(radius) >= 0;
+}
 
-    return validLat && validLon;
+/**
+ * Checks if a given latitude is valid
+ */
+function isValidLatitude(lat) {
+    let ck_lat = /^(-?[1-8]?\d(?:\.\d{1,18})?|90(?:\.0{1,18})?)$/;
+    return ck_lat.test(lat);
+}
+
+/**
+ * Checks if a given longitude
+ */
+function isValidLongitude(lng) {
+    let ck_lon = /^(-?(?:1[0-7]|[1-9])?\d(?:\.\d{1,18})?|180(?:\.0{1,18})?)$/;
+    return ck_lon.test(lng);
+}
+
+/**
+ * Checks if a given coordinate is in the correct format
+ */
+function isValidCoordinate(lat, lng) {
+    return isValidLatitude(lat) && isValidLongitude(lng);
 }
 
 /**
@@ -91,19 +119,25 @@ function mapSelector(elem, mapConfig = {}) {
 
     let map;
     let marker;
+    let circle;
     let geocoder;
     let clearBtn = elem.querySelector(mapConfig.clearBtn);
     let latInput = elem.querySelector(mapConfig.latInput);
     let lngInput = elem.querySelector(mapConfig.lngInput);
+    let radiusInput = elem.querySelector(mapConfig.radiusInput);
     let searchInput = elem.querySelector(mapConfig.searchInput);
 
-    // determine the coordinates
-    if (mapConfig.lat === null && latInput) {
+    // determine the values
+    if (mapConfig.lat === null && latInput && isValidLatitude(latInput.value)) {
         mapConfig.lat = latInput.value;
     }
 
-    if (mapConfig.lng === null && lngInput) {
+    if (mapConfig.lng === null && lngInput && isValidLongitude(lngInput.value)) {
         mapConfig.lng = lngInput.value;
+    }
+
+    if (mapConfig.radius === null && radiusInput && isValidRadius(radiusInput.value)) {
+        mapConfig.radius = Number(radiusInput.value);
     }
 
     const intersectionObserver = new IntersectionObserver((entries) => {
@@ -154,19 +188,56 @@ function mapSelector(elem, mapConfig = {}) {
             setupSearchBox(SearchBox);
         }
 
-        google.maps.event.addListener(marker, 'dragend', function (evt) {
-            if (latInput || lngInput) {
-                updateInputs(evt.latLng);
-            }
-
-            if (searchInput) {
-                updateSearchInput(evt.latLng);
-            }
-        });
+        if (mapConfig.enableRadius) {
+            circle = createCircle(mapCenter);
+        }
 
         if (! mapConfig.disabled) {
             addInputEventListeners();
         }
+    }
+
+    /**
+     * Create circle
+     *
+     * @param coordinates
+     */
+    function createCircle(coordinates) {
+        circle = new google.maps.Circle({
+            center: coordinates,
+            radius: normalizeRadius(mapConfig.radius),
+            map: map,
+            strokeColor: mapConfig.circleStrokeColor,
+            strokeOpacity: mapConfig.circleStrokeOpacity,
+            strokeWeight: mapConfig.circleStrokeWeight,
+            fillColor: mapConfig.circleFillColor,
+            fillOpacity: mapConfig.circleFillOpacity,
+            draggable: ! mapConfig.disabled,
+            editable: ! mapConfig.disabled
+        });
+
+        google.maps.event.addListener(circle, 'center_changed', function (evt) {
+            updateMarkerPosition(circle.center);
+            updateCoordinateInputs(circle.center);
+            updateSearchInput(circle.center);
+        });
+
+        google.maps.event.addListener(circle, 'radius_changed', function (evt) {
+            updateRadiusInputs(circle.radius.toFixed(mapConfig.radiusPrecision));
+        });
+
+        return circle;
+    }
+
+    /**
+     * Normalize the radius
+     */
+    function normalizeRadius(radius) {
+        if (mapConfig.radiusUnit.toLowerCase() === 'km') {
+            return radius * 1000;
+        }
+
+        return radius;
     }
 
     /**
@@ -223,6 +294,12 @@ function mapSelector(elem, mapConfig = {}) {
             intersectionObserver.observe(content);
         }
 
+        google.maps.event.addListener(marker, 'dragend', function (evt) {
+            updateCoordinateInputs(evt.latLng);
+            updateCirclePosition(evt.latLng);
+            updateSearchInput(evt.latLng);
+        });
+
         return marker;
     }
 
@@ -251,13 +328,15 @@ function mapSelector(elem, mapConfig = {}) {
                 let bounds = new google.maps.LatLngBounds();
 
                 // Move marker to place.
-                marker.position = place.geometry.location;
+                updateMarkerPosition(place.geometry.location);
+                updateCirclePosition(place.geometry.location);
+
                 bounds.extend(place.geometry.location);
                 map.fitBounds(bounds);
                 map.setZoom(16);
 
                 // update coordinates
-                updateInputs(place.geometry.location);
+                updateCoordinateInputs(place.geometry.location);
             });
 
             // Bias the SearchBox results towards places that are within the bounds of the
@@ -280,14 +359,49 @@ function mapSelector(elem, mapConfig = {}) {
         if (lngInput) {
             lngInput.addEventListener('input', updateMapFromInputs);
         }
+
+        if (radiusInput && mapConfig.enableRadius) {
+            radiusInput.addEventListener('input', updateMapFromInputs);
+        }
+    }
+
+    /**
+     * Update the circle radius
+     */
+    function updateCircleRadius(radius) {
+        if (circle) {
+            circle.setRadius(normalizeRadius(radius));
+        }
+    }
+
+    /**
+     * Update the circle position
+     */
+    function updateCirclePosition(coordinates) {
+        if (circle) {
+            circle.setCenter(coordinates);
+        }
+    }
+
+    /**
+     * Update the marker position
+     */
+    function updateMarkerPosition(coordinates, pan) {
+        if (marker) {
+            marker.position = coordinates;
+
+            if (pan) {
+                map.panTo(coordinates);
+            }
+        }
     }
 
     /**
      * Update map from inputs
      */
     function updateMapFromInputs() {
-        let lat = marker.position.lat;
-        let lng = marker.position.lng;
+        let lat = null;
+        let lng = null;
 
         if (latInput) {
             lat = latInput.value;
@@ -298,11 +412,17 @@ function mapSelector(elem, mapConfig = {}) {
         }
 
         if (isValidCoordinate(lat, lng)) {
-            marker.position = new google.maps.LatLng(lat, lng);
-            map.panTo(new google.maps.LatLng(lat, lng));
+            let coordinates = new google.maps.LatLng(lat, lng);
+            updateMarkerPosition(coordinates, true);
+            updateCirclePosition(coordinates);
+            updateSearchInput(coordinates);
+        }
 
-            if (searchInput) {
-                updateSearchInput(new google.maps.LatLng(lat, lng));
+        if (radiusInput && mapConfig.enableRadius) {
+            let radius = radiusInput.value;
+
+            if (isValidRadius(radius)) {
+                updateCircleRadius(Number(radius));
             }
         }
     }
@@ -312,30 +432,42 @@ function mapSelector(elem, mapConfig = {}) {
      * @param coordinates
      */
     function updateSearchInput(coordinates) {
-        geocoder.geocode({'latLng': coordinates}, function (results, status) {
-            if (status === google.maps.GeocoderStatus.OK) {
-                if (results[0]) {
-                    searchInput.value = results[0].formatted_address;
+        if (searchInput) {
+            geocoder.geocode({'latLng': coordinates}, function (results, status) {
+                if (status === google.maps.GeocoderStatus.OK) {
+                    if (results[0]) {
+                        searchInput.value = results[0].formatted_address;
+                    } else {
+                        searchInput.value = '';
+                    }
                 } else {
                     searchInput.value = '';
                 }
-            } else {
-                searchInput.value = '';
-            }
-        });
+            });
+        }
     }
 
     /**
      * Update the coordinates
      * @param {google.maps.LatLng} coordinates
      */
-    function updateInputs(coordinates) {
+    function updateCoordinateInputs(coordinates) {
         if (latInput) {
             latInput.value = coordinates.lat().toFixed(6);
         }
 
         if (lngInput) {
             lngInput.value = coordinates.lng().toFixed(6);
+        }
+    }
+
+    /**
+     * Update the radius
+     * @param {Number} radius
+     */
+    function updateRadiusInputs(radius) {
+        if (radiusInput) {
+            radiusInput.value = radius;
         }
     }
 
@@ -352,6 +484,10 @@ function mapSelector(elem, mapConfig = {}) {
 
         if (lngInput) {
             lngInput.value = '';
+        }
+
+        if (radiusInput) {
+            radiusInput.value = '';
         }
     }
 
