@@ -133,7 +133,11 @@
                                 <textarea class="form-control map-selector-polygon" name="polygon" placeholder="Polygon"></textarea>
                             </div>
 
-                            <button type="button" class="map-selector-clear-btn btn btn-light">Clear</button>
+                            <button type="button" class="map-selector-clear-btn btn btn-light mb-4">Clear</button>
+
+                            <div class="alert alert-info" role="alert">
+                                Click on the map to add a vertex and double-click on a vertex to delete it.
+                            </div>
 
                             <div class="mt-4">
                                 <input class="map-selector-search material-controls" type="text" placeholder="Search..." />
@@ -510,7 +514,7 @@
 </script>
 
 <script type="module">
-    import * as mapSelector from '../src/index.js?v=beta-1.0.0';
+    import * as mapSelector from '../src/index.js?v=beta-1.1.0';
 
     mapSelector.init();
 </script>
