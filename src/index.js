@@ -37,10 +37,10 @@ let config = {
     radiusInput: 'input.map-selector-radius',
     radiusUnit: 'm', // m or km
     radiusPrecision: 0,
-    circleStrokeColor: '#FF5722',
+    circleStrokeColor: '#FF9800',
     circleStrokeOpacity: 0.8,
     circleStrokeWeight: 3,
-    circleFillColor: '#FF5722',
+    circleFillColor: '#FF9800',
     circleFillOpacity: 0.2,
     enablePolygon: false,
     polygonRadius: 10, // in meters
@@ -306,20 +306,6 @@ function createDefaultPolygonPath(lat, lng, radius) {
 }
 
 /**
- * Get polygon bounds
- * https://stackoverflow.com/questions/24401240/how-to-get-latlngbounds-of-feature-polygon-geometry-in-google-maps-v3
- */
-function getPolygonBounds(polygon) {
-    let bounds = new google.maps.LatLngBounds();
-
-    polygon.getPath().forEach(function(latlng){
-        bounds.extend(latlng);
-    });
-
-    return bounds;
-}
-
-/**
  * Checks if a radius
  */
 function isValidRadius(radius) {
@@ -390,6 +376,129 @@ function getDataAtrributeConfigs(elem, allowedKeys) {
     });
 
     return data;
+}
+
+/**
+ * Setup polygon functions
+ */
+function setupPolygonFunctions() {
+    /**
+     * https://github.com/bramus/google-maps-polygon-moveto
+     * Polygon getBounds extension - google-maps-extensions
+     * @see http://code.google.com/p/google-maps-extensions/source/browse/google.maps.Polygon.getBounds.js
+     */
+    if (!google.maps.Polygon.prototype.getBounds) {
+        google.maps.Polygon.prototype.getBounds = function(latLng) {
+            var bounds = new google.maps.LatLngBounds();
+            var paths = this.getPaths();
+            var path;
+
+            for (var p = 0; p < paths.getLength(); p++) {
+                path = paths.getAt(p);
+                for (var i = 0; i < path.getLength(); i++) {
+                    bounds.extend(path.getAt(i));
+                }
+            }
+
+            return bounds;
+        };
+    }
+
+    /**
+     * google.maps.Polygon.moveTo() — Move a Polygon on Google Maps V3 to a new LatLng()
+     * Built by Bramus! - http://www.bram.us/
+     *
+     * @requires  google.maps.Polygon.getBounds
+     * @requires  google.maps.geometry
+     */
+    if (!google.maps.Polygon.prototype.moveTo) {
+        google.maps.Polygon.prototype.moveTo = function(latLng) {
+
+            // our vars
+            var path;
+            var boundsCenter = this.getBounds().getCenter(), // center of the polygonbounds
+                paths = this.getPaths(), // paths that make up the polygon
+                newPoints =[], // array on which we'll store our new points
+                newPaths = []; // array containing the new paths that make up the polygon
+
+            // geodesic enabled: we need to recalculate every point relatively
+            if (this.geodesic) {
+
+                // loop all the points of the original path and calculate the bearing + distance of that point relative to the center of the shape
+                for (var p = 0; p < paths.getLength(); p++) {
+                    path = paths.getAt(p);
+                    newPoints.push([]);
+
+                    for (var i = 0; i < path.getLength(); i++) {
+                        newPoints[newPoints.length-1].push({
+                            heading: google.maps.geometry.spherical.computeHeading(boundsCenter, path.getAt(i)),
+                            distance: google.maps.geometry.spherical.computeDistanceBetween(boundsCenter, path.getAt(i))
+                        });
+                    }
+                }
+
+                // now that we have the "relative" points, rebuild the shapes on the new location around the new center
+                for (var j = 0, jl = newPoints.length; j < jl; j++) {
+                    var shapeCoords = [],
+                        relativePoint = newPoints[j];
+                    for (var k = 0, kl = relativePoint.length; k < kl; k++) {
+                        shapeCoords.push(google.maps.geometry.spherical.computeOffset(
+                            latLng,
+                            relativePoint[k].distance,
+                            relativePoint[k].heading
+                        ));
+                    }
+                    newPaths.push(shapeCoords);
+                }
+
+            }
+
+            // geodesic not enabled: adjust the coordinates pixelwise
+            else {
+
+                var latlngToPoint = function(map, latlng){
+                    var normalizedPoint = map.getProjection().fromLatLngToPoint(latlng); // returns x,y normalized to 0~255
+                    var scale = Math.pow(2, map.getZoom());
+                    var pixelCoordinate = new google.maps.Point(normalizedPoint.x * scale, normalizedPoint.y * scale);
+                    return pixelCoordinate;
+                };
+                var pointToLatlng = function(map, point){
+                    var scale = Math.pow(2, map.getZoom());
+                    var normalizedPoint = new google.maps.Point(point.x / scale, point.y / scale);
+                    var latlng = map.getProjection().fromPointToLatLng(normalizedPoint);
+                    return latlng;
+                };
+
+                // calc the pixel position of the bounds and the new latLng
+                var boundsCenterPx = latlngToPoint(this.map, boundsCenter),
+                    latLngPx = latlngToPoint(this.map, latLng);
+
+                // calc the pixel difference between the bounds and the new latLng
+                var dLatPx = (boundsCenterPx.y - latLngPx.y) * (-1),
+                    dLngPx = (boundsCenterPx.x - latLngPx.x) * (-1);
+
+                // adjust all paths
+                for (var p = 0; p < paths.getLength(); p++) {
+                    path = paths.getAt(p);
+                    newPaths.push([]);
+                    for (var i = 0; i < path.getLength(); i++) {
+                        var pixels = latlngToPoint(this.map, path.getAt(i));
+                        pixels.x += dLngPx;
+                        pixels.y += dLatPx;
+                        newPaths[newPaths.length-1].push(pointToLatlng(this.map, pixels));
+                    }
+                }
+
+            }
+
+            // Update the path of the Polygon to the new path
+            this.setPaths(newPaths);
+
+            // Return the polygon itself so we can chain
+            return this;
+
+        };
+    }
 }
 
 /**
@@ -512,6 +621,7 @@ function mapSelector(elem, mapConfig = {}) {
      * @param coordinates
      */
     function createPolygon(coordinates) {
+        setupPolygonFunctions();
         polygon = new google.maps.Polygon({
             paths: mapConfig.polygon,
             center: coordinates,
@@ -525,7 +635,13 @@ function mapSelector(elem, mapConfig = {}) {
             editable: ! mapConfig.disabled
         });
 
-        map.fitBounds(getPolygonBounds(polygon));
+        let bounds = polygon.getBounds();
+
+        if (circle) {
+            bounds = bounds.union(circle.getBounds());
+        }
+
+        map.fitBounds(bounds);
 
         if (! mapConfig.disabled) {
             // delete vertex on double click
@@ -552,13 +668,19 @@ function mapSelector(elem, mapConfig = {}) {
 
                 polygon.setPath(path);
             });
+
+            google.maps.event.addListener(polygon, 'dragend', function (evt) {
+                let bounds = polygon.getBounds();
+                let center = bounds.getCenter();
+
+                updateMarkerPosition(center);
+                updateCirclePosition(center);
+                updateCoordinateInputs(center);
+                updateSearchInput(center);
+            });
         }
 
-        /*google.maps.event.addListener(circle, 'center_changed', function (evt) {
-            updateMarkerPosition(circle.center);
-            updateCoordinateInputs(circle.center);
-            updateSearchInput(circle.center);
-        });
+        /*
 
         google.maps.event.addListener(circle, 'radius_changed', function (evt) {
             updateRadiusInputs(circle.radius);
@@ -586,10 +708,17 @@ function mapSelector(elem, mapConfig = {}) {
             editable: ! mapConfig.disabled
         });
 
-        map.fitBounds(circle.getBounds());
+        let bounds = circle.getBounds();
+
+        if (polygon) {
+            bounds = bounds.union(polygon.getBounds());
+        }
+
+        map.fitBounds(bounds);
 
         google.maps.event.addListener(circle, 'center_changed', function (evt) {
             updateMarkerPosition(circle.center);
+            updatePolygonPosition(circle.center);
             updateCoordinateInputs(circle.center);
             updateSearchInput(circle.center);
         });
@@ -680,6 +809,7 @@ function mapSelector(elem, mapConfig = {}) {
         google.maps.event.addListener(marker, 'dragend', function (evt) {
             updateCoordinateInputs(evt.latLng);
             updateCirclePosition(evt.latLng);
+            updatePolygonPosition(evt.latLng);
             updateSearchInput(evt.latLng);
         });
 
@@ -712,16 +842,20 @@ function mapSelector(elem, mapConfig = {}) {
 
                 // Move marker to place.
                 updateMarkerPosition(place.geometry.location);
+                updatePolygonPosition(place.geometry.location);
                 updateCirclePosition(place.geometry.location);
 
                 bounds.extend(place.geometry.location);
-                map.fitBounds(bounds);
+
+                if (polygon) {
+                    bounds = bounds.union(polygon.getBounds());
+                }
 
                 if (circle) {
-                    map.fitBounds(circle.getBounds());
-                } else {
-                    map.setZoom(16);
+                    bounds = bounds.union(circle.getBounds());
                 }
+
+                map.fitBounds(bounds);
 
                 // update coordinates
                 updateCoordinateInputs(place.geometry.location);
@@ -776,6 +910,15 @@ function mapSelector(elem, mapConfig = {}) {
     }
 
     /**
+     * Update the polygon position
+     */
+    function updatePolygonPosition(coordinates) {
+        if (polygon) {
+            polygon.moveTo(coordinates);
+        }
+    }
+
+    /**
      * Update the marker position
      */
     function updateMarkerPosition(coordinates, pan) {
@@ -808,6 +951,7 @@ function mapSelector(elem, mapConfig = {}) {
 
             shouldUpdateCoordinateInput = false;
             updateMarkerPosition(coordinates, true);
+            updatePolygonPosition(coordinates);
             updateCirclePosition(coordinates);
             updateSearchInput(coordinates);
             shouldUpdateCoordinateInput = true;

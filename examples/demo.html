@@ -107,6 +107,59 @@
             <div class="col">
                 <div class="card">
                     <div class="card-body py-4">
+                        <h4 class="card-title mb-4">Everything Map Selector</h4>
+
+                        <div data-map-selector="true" data-enable-radius="true" data-enable-polygon="true">
+
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="mb-4">
+                                        <label class="form-label">Latitude</label>
+                                        <input class="form-control map-selector-lat" type="number" name="lat" value="4.175804" step="0.000001"
+                                               min="-90" max="90" placeholder="Latitude"/>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-4">
+                                        <label class="form-label">Longitude</label>
+                                        <input class="form-control map-selector-lng" type="number" name="lng" value="73.509337" step="0.000001"
+                                               min="-180" max="180" placeholder="Longitude"/>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-4">
+                                        <label class="form-label">Radius (Meters)</label>
+                                        <input class="form-control map-selector-radius" type="number" name="radius" value="8" step="1"
+                                               min="0" max="40000000" placeholder="Radius"/>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="form-label">Polygon</label>
+                                <textarea class="form-control map-selector-polygon" name="polygon" placeholder="Polygon"></textarea>
+                            </div>
+
+                            <button type="button" class="map-selector-clear-btn btn btn-light mb-4">Clear</button>
+
+                            <div class="alert alert-info" role="alert">
+                                Click on the map to add a vertex and double-click on a vertex to delete it.
+                            </div>
+
+                            <div class="mt-4">
+                                <input class="map-selector-search material-controls" type="text" placeholder="Search..." />
+                                <div class="map-selector-map bg-light rounded"></div>
+                            </div>
+
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <div class="col">
+                <div class="card">
+                    <div class="card-body py-4">
                         <h4 class="card-title mb-4">Polygon Map Selector</h4>
 
                         <div data-map-selector="true" data-enable-polygon="true">
@@ -514,7 +567,7 @@
 </script>
 
 <script type="module">
-    import * as mapSelector from '../src/index.js?v=beta-1.1.0';
+    import * as mapSelector from '../src/index.js?v=beta-1.3.0';
 
     mapSelector.init();
 </script>
