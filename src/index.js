@@ -336,9 +336,34 @@ function isValidCoordinate(lat, lng) {
 }
 
 /**
- * Checks if a given polygon string is valid
+ * Checks if a given polygon path array is valid
  */
-function isValidPolygonWkt(wkt) {
+function isValidPolygonPath(path) {
+    let firstPoint = null;
+    let lastPoint = null;
+    let length = path.length;
+
+    for (let i = 0; i < length; i++) {
+        let coord = path[i];
+
+        if (i === 0) {
+            firstPoint = coord;
+        } else if (i === (length - 1)) {
+            lastPoint = coord;
+        }
+
+        if (! isValidCoordinate(coord.lat, coord.lng)) {
+            return false;
+        }
+    }
+
+    // need at least 3 points
+    if (length > 2) {
+        // first and last points must match
+        return firstPoint.lat === lastPoint.lat &&
+            firstPoint.lng === lastPoint.lng;
+    }
+
     return false;
 }
 
@@ -376,6 +401,74 @@ function getDataAtrributeConfigs(elem, allowedKeys) {
     });
 
     return data;
+}
+
+/**
+ * Convert lat lng array to polygon string
+ */
+function pathToWkt(path){
+    let wkt = '(';
+    let length = path.getLength();
+    let first_point = null;
+    let last_point = null;
+
+    for(let i = 0; i < length; i++) {
+        let coord = path.getAt(i);
+
+        if (i === 0) {
+            first_point = coord;
+        } else if (i === (length - 1)) {
+            last_point = coord;
+        }
+
+        wkt += coord.lng() + ' ' + coord.lat() + ',';
+    }
+
+    // check if first and last point matches
+    if (first_point && last_point) {
+        if (! first_point.equals(last_point)) {
+            // append first point to end
+            wkt += first_point.lng() + ' ' + first_point.lat() + ',';
+        }
+    }
+    // remove ending ,
+    let str_len = wkt.length;
+
+    if (wkt.substring(str_len - 1) === ',') {
+        wkt = wkt.substring(0, str_len - 1);
+    }
+
+    // add closing parenthesis
+    wkt += ')';
+
+    return wkt;
+}
+
+/**
+ * Convert polygon string to lat lng array
+ */
+function polygonWktToArray(wkt) {
+    let path = [];
+
+    let values = wkt.replace(')', '');
+    values = values.replace('(', '');
+
+    let coords = values.split(',');
+
+    for (let i = 0; i < coords.length; i++) {
+        let coord = coords[i].split(' ');
+        let lat = coord[1];
+        let lng = coord[0];
+
+        if (isValidCoordinate(lat, lng)) {
+            path.push({
+                lat: Number(lat),
+                lng: Number(lng)
+            });
+        }
+    }
+
+    return path;
 }
 
 /**
@@ -547,8 +640,10 @@ function mapSelector(elem, mapConfig = {}) {
     }
 
     if (mapConfig.polygon === null) {
-        mapConfig.polygon = polygonInput && isValidPolygonWkt(polygonInput.value) ?
-            polygonInput.value :
+        let inputPath = polygonInput ? polygonWktToArray(polygonInput.value) : [];
+
+        mapConfig.polygon = isValidPolygonPath(inputPath) ?
+            inputPath :
             createDefaultPolygonPath(mapConfig.lat, mapConfig.lng, mapConfig.polygonRadius);
     }
 
@@ -676,9 +771,12 @@ function mapSelector(elem, mapConfig = {}) {
 
                 updateMarkerPosition(center);
                 updateCirclePosition(center);
+                updatePolygonInputs(polygon.getPath());
                 updateCoordinateInputs(center);
                 updateSearchInput(center);
             });
+
+            addPolygonPathListeners();
         }
 
         /*
@@ -689,7 +787,26 @@ function mapSelector(elem, mapConfig = {}) {
 
         return polygon;
     }
-    
+
+    /**
+     * Add polygon path event listeners
+     */
+    function addPolygonPathListeners() {
+        let polygonPath = polygon.getPath();
+
+        google.maps.event.addListener(polygonPath, 'insert_at', function (evt) {
+            updatePolygonInputs(polygon.getPath());
+        });
+
+        google.maps.event.addListener(polygonPath, 'remove_at', function (evt) {
+            updatePolygonInputs(polygon.getPath());
+        });
+
+        google.maps.event.addListener(polygonPath, 'set_at', function (evt) {
+            updatePolygonInputs(polygon.getPath());
+        });
+    }
+
     /**
      * Create circle
      *
@@ -916,6 +1033,18 @@ function mapSelector(elem, mapConfig = {}) {
     function updatePolygonPosition(coordinates) {
         if (polygon) {
             polygon.moveTo(coordinates);
+            updatePolygonInputs(polygon.getPath());
+            addPolygonPathListeners();
+        }
+    }
+
+    /**
+     * Update the polygon path
+     */
+    function updatePolygonPath(path) {
+        if (polygon) {
+            polygon.setPath(path);
+            addPolygonPathListeners();
         }
     }
 
@@ -967,6 +1096,16 @@ function mapSelector(elem, mapConfig = {}) {
                 shouldUpdateRadiusInput = true;
             }
         }
+
+        if (polygonInput && mapConfig.enablePolygon) {
+            let inputPath = polygonWktToArray(polygonInput.value);
+
+            if (isValidPolygonPath(inputPath)) {
+                shouldUpdatePolygonInput = false;
+                updatePolygonPath(inputPath);
+                shouldUpdatePolygonInput = true;
+            }
+        }
     }
 
     /**
@@ -1012,6 +1151,16 @@ function mapSelector(elem, mapConfig = {}) {
     function updateRadiusInputs(radius) {
         if (radiusInput && shouldUpdateRadiusInput) {
             radiusInput.value = normalizeInputRadius(radius);
+        }
+    }
+
+    /**
+     * Update the polygon inputs
+     * @param {Array<LatLng>} path
+     */
+    function updatePolygonInputs(path) {
+        if (polygonInput && shouldUpdatePolygonInput) {
+            polygonInput.value = pathToWkt(path);
         }
     }
 
