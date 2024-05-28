@@ -16,6 +16,7 @@ let config = {
     zoom: 14,
     disabled: false,
     animate: true,
+    enableMarker: true,
     pinImage: null,
     pinIcon: null,
     pinScale: 1.5,
@@ -121,6 +122,8 @@ function mapSelector(elem, mapConfig = {}) {
     let marker;
     let circle;
     let geocoder;
+    let shouldUpdateCoordinateInput = true;
+    let shouldUpdateRadiusInput = true;
     let clearBtn = elem.querySelector(mapConfig.clearBtn);
     let latInput = elem.querySelector(mapConfig.latInput);
     let lngInput = elem.querySelector(mapConfig.lngInput);
@@ -180,8 +183,10 @@ function mapSelector(elem, mapConfig = {}) {
         map = new Map(elem.querySelector(mapConfig.mapSelector), mapOptions);
 
         // create marker
-        const {AdvancedMarkerElement, PinElement} = await google.maps.importLibrary('marker');
-        marker = createMarker(mapCenter, AdvancedMarkerElement, PinElement);
+        if (mapConfig.enableMarker) {
+            const {AdvancedMarkerElement, PinElement} = await google.maps.importLibrary('marker');
+            marker = createMarker(mapCenter, AdvancedMarkerElement, PinElement);
+        }
 
         // setup search box
         if (searchInput) {
@@ -205,7 +210,7 @@ function mapSelector(elem, mapConfig = {}) {
     function createCircle(coordinates) {
         circle = new google.maps.Circle({
             center: coordinates,
-            radius: normalizeRadius(mapConfig.radius),
+            radius: normalizeCircleRadius(mapConfig.radius),
             map: map,
             strokeColor: mapConfig.circleStrokeColor,
             strokeOpacity: mapConfig.circleStrokeOpacity,
@@ -216,6 +221,8 @@ function mapSelector(elem, mapConfig = {}) {
             editable: ! mapConfig.disabled
         });
 
+        map.fitBounds(circle.getBounds());
+
         google.maps.event.addListener(circle, 'center_changed', function (evt) {
             updateMarkerPosition(circle.center);
             updateCoordinateInputs(circle.center);
@@ -223,21 +230,32 @@ function mapSelector(elem, mapConfig = {}) {
         });
 
         google.maps.event.addListener(circle, 'radius_changed', function (evt) {
-            updateRadiusInputs(circle.radius.toFixed(mapConfig.radiusPrecision));
+            updateRadiusInputs(circle.radius);
         });
 
         return circle;
     }
 
     /**
-     * Normalize the radius
+     * Normalize the circle radius
      */
-    function normalizeRadius(radius) {
+    function normalizeCircleRadius(radius) {
         if (mapConfig.radiusUnit.toLowerCase() === 'km') {
             return radius * 1000;
         }
 
         return radius;
+    }
+
+    /**
+     * Normalize the input radius
+     */
+    function normalizeInputRadius(radius) {
+        if (mapConfig.radiusUnit.toLowerCase() === 'km') {
+            radius = radius / 1000.0;
+        }
+
+        return radius.toFixed(mapConfig.radiusPrecision);
     }
 
     /**
@@ -333,7 +351,12 @@ function mapSelector(elem, mapConfig = {}) {
 
                 bounds.extend(place.geometry.location);
                 map.fitBounds(bounds);
-                map.setZoom(16);
+
+                if (circle) {
+                    map.fitBounds(circle.getBounds());
+                } else {
+                    map.setZoom(16);
+                }
 
                 // update coordinates
                 updateCoordinateInputs(place.geometry.location);
@@ -370,7 +393,7 @@ function mapSelector(elem, mapConfig = {}) {
      */
     function updateCircleRadius(radius) {
         if (circle) {
-            circle.setRadius(normalizeRadius(radius));
+            circle.setRadius(normalizeCircleRadius(radius));
         }
     }
 
@@ -413,16 +436,21 @@ function mapSelector(elem, mapConfig = {}) {
 
         if (isValidCoordinate(lat, lng)) {
             let coordinates = new google.maps.LatLng(lat, lng);
+
+            shouldUpdateCoordinateInput = false;
             updateMarkerPosition(coordinates, true);
             updateCirclePosition(coordinates);
             updateSearchInput(coordinates);
+            shouldUpdateCoordinateInput = true;
         }
 
         if (radiusInput && mapConfig.enableRadius) {
             let radius = radiusInput.value;
 
             if (isValidRadius(radius)) {
+                shouldUpdateRadiusInput = false;
                 updateCircleRadius(Number(radius));
+                shouldUpdateRadiusInput = true;
             }
         }
     }
@@ -452,12 +480,14 @@ function mapSelector(elem, mapConfig = {}) {
      * @param {google.maps.LatLng} coordinates
      */
     function updateCoordinateInputs(coordinates) {
-        if (latInput) {
-            latInput.value = coordinates.lat().toFixed(6);
-        }
+        if (shouldUpdateCoordinateInput) {
+            if (latInput) {
+                latInput.value = coordinates.lat().toFixed(6);
+            }
 
-        if (lngInput) {
-            lngInput.value = coordinates.lng().toFixed(6);
+            if (lngInput) {
+                lngInput.value = coordinates.lng().toFixed(6);
+            }
         }
     }
 
@@ -466,8 +496,8 @@ function mapSelector(elem, mapConfig = {}) {
      * @param {Number} radius
      */
     function updateRadiusInputs(radius) {
-        if (radiusInput) {
-            radiusInput.value = radius;
+        if (radiusInput && shouldUpdateRadiusInput) {
+            radiusInput.value = normalizeInputRadius(radius);
         }
     }
 
