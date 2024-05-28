@@ -580,6 +580,7 @@ function mapSelector(elem, mapConfig = {}) {
             gestureHandling: mapConfig.disabled ? 'none' : 'auto',
             clickableIcons: false,
             disableDefaultUI: true,
+            fullscreenControl: true,
             streetViewControl: false,
             zoomControl: ! mapConfig.disabled,
             zoomControlOptions: {
