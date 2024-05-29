@@ -21,5 +21,5 @@ $map-selector-marker-background-color: $primary;
 $map-selector-marker-glyph-color: $primary;
 $map-selector-marker-icon-size: 1.2rem;
 
-@import '@javaabu/js-map-selector/scss/map-selector';
+@import '@javaabu/js-map-selector/src/scss/map-selector';
 ```

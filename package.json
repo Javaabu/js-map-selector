@@ -4,7 +4,8 @@
   "description": "JavaScript Google Map input selector",
   "main": "src/index.js",
   "files": [
-    "dist"
+    "dist",
+    "src/scss"
   ],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
