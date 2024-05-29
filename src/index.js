@@ -668,6 +668,10 @@ function mapSelector(elem, mapConfig = {}) {
             createDefaultPolygonPath(mapConfig.lat, mapConfig.lng, mapConfig.polygonRadius);
     }
 
+    if (mapConfig.disabled) {
+        disableInputs(true);
+    }
+
     const intersectionObserver = new IntersectionObserver((entries) => {
         for (const entry of entries) {
             if (entry.isIntersecting) {
@@ -729,6 +733,32 @@ function mapSelector(elem, mapConfig = {}) {
 
         if (! mapConfig.disabled) {
             addInputEventListeners();
+        }
+    }
+
+    /**
+     * Disable inputs
+     */
+    function disableInputs(disable) {
+        if (latInput) {
+            latInput.disabled = disable;
+        }
+
+        if (lngInput) {
+            lngInput.disabled = disable;
+        }
+
+        if (polygonInput) {
+            polygonInput.disabled = disable;
+        }
+
+        if (radiusInput) {
+            radiusInput.disabled = disable;
+        }
+
+        if (searchInput) {
+            searchInput.disabled = disable;
+            searchInput.style.display = disable ? 'none' : 'block';
         }
     }
 
