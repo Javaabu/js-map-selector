@@ -1,0 +1,22 @@
+.map-selector-search {
+    font-size: $map-selector-search-font-size;
+    color: $map-selector-search-color;
+    border: 0;
+    border-radius: 2px;
+    box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    height: 40px;
+    outline: none;
+    box-shadow: $map-selector-search-box-shadow;
+    background-color: $map-selector-search-background-color;
+    margin: 10px;
+    padding: 18px 16px;
+    text-overflow: ellipsis;
+    direction: ltr;
+    width: calc(100% - 100px); /* Fullscreen button is 40px */
+    max-width: 500px;
+}
+
+.map-selector-search:focus {
+    box-shadow: $map-selector-search-focus-box-shadow;
+}

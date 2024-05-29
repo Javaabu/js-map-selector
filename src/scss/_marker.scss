@@ -1,0 +1,20 @@
+/**
+Marker Styling
+*/
+.map-selector-marker {
+    path[class*="maps-pin-view-border"] {
+        fill: $map-selector-marker-border-color;
+    }
+
+    path[class*="maps-pin-view-background"] {
+        fill: $map-selector-marker-background-color;
+    }
+
+    path[class*="maps-pin-view-default-glyph"] {
+        fill: $map-selector-marker-glyph-color;
+    }
+
+    .map-selector-icon {
+        font-size: $map-selector-marker-icon-size;
+    }
+}
