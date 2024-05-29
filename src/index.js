@@ -648,26 +648,7 @@ function mapSelector(elem, mapConfig = {}) {
     let polygonInput = elem.querySelector(mapConfig.polygonInput);
     let searchInput = elem.querySelector(mapConfig.searchInput);
 
-    // determine the values
-    if (mapConfig.lat === null) {
-        mapConfig.lat = latInput && isValidLatitude(latInput.value) ? Number(latInput.value) : 0;
-    }
-
-    if (mapConfig.lng === null) {
-        mapConfig.lng = lngInput && isValidLongitude(lngInput.value) ? Number(lngInput.value) : 0;
-    }
-
-    if (mapConfig.radius === null) {
-        mapConfig.radius = radiusInput && isValidRadius(radiusInput.value) ? Number(radiusInput.value) : 1;
-    }
-
-    if (mapConfig.polygon === null) {
-        let inputPath = polygonInput ? polygonWktToArray(polygonInput.value) : [];
-
-        mapConfig.polygon = isValidPolygonPath(inputPath) ?
-            inputPath :
-            createDefaultPolygonPath(mapConfig.lat, mapConfig.lng, mapConfig.polygonRadius);
-    }
+    loadInitialValues();
 
     if (mapConfig.disabled) {
         disableInputs(true);
@@ -734,6 +715,43 @@ function mapSelector(elem, mapConfig = {}) {
 
         if (! mapConfig.disabled) {
             addInputEventListeners();
+        }
+    }
+
+    /**
+     * Load initial values
+     */
+    function loadInitialValues() {
+        // determine the values
+
+        if (latInput && isValidLatitude(latInput.value)) {
+            mapConfig.lat = Number(latInput.value);
+        } else if (mapConfig.lat === null) {
+            mapConfig.lat = 0;
+        }
+
+        if (lngInput && isValidLongitude(lngInput.value)) {
+            mapConfig.lng = Number(lngInput.value);
+        } else if (mapConfig.lng === null) {
+            mapConfig.lng = 0;
+        }
+
+        if (radiusInput && isValidRadius(radiusInput.value)) {
+            mapConfig.radius = Number(radiusInput.value);
+        } else if (mapConfig.radius === null) {
+            mapConfig.radius = 1;
+        }
+
+        let inputPath = polygonInput ? polygonWktToArray(polygonInput.value) : [];
+
+        if (polygonInput && isValidPolygonPath(inputPath)) {
+            mapConfig.polygon = inputPath;
+        } else if (mapConfig.polygon === null) {
+            mapConfig.polygon = createDefaultPolygonPath(mapConfig.lat, mapConfig.lng, mapConfig.polygonRadius);
+        } else if (typeof mapConfig.polygon === 'string') {
+            let configPolygonPath = polygonWktToArray(mapConfig.polygon);
+
+            mapConfig.polygon = isValidPolygonPath(configPolygonPath) ? configPolygonPath : [];
         }
     }
 

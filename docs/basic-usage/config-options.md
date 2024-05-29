@@ -6,6 +6,16 @@ sidebar_position: 2
 All these config options can be set on individual `mapSelector` elements using data attributes with the config name in
 kebab case. For example to customise the `pinBackground`, you can use the `data-pin-background` attribute.
 
+To override global config options, you can do so before `mapSelector` is initialized. For example, to change the default `iconPrefix`:
+
+```javascript
+import * as mapSelector from '@javaabu/js-map-selector';
+
+mapSelector.config.iconPrefix = 'zmdi';
+
+mapSelector.init();
+```
+
 | Config Option            | Type      | Default                       | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 |--------------------------|-----------|-------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | **iconPrefix**           | _String_  | `'fa'`                        | Prefix to be used for icons when setting a pin icon                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
