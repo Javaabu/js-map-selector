@@ -445,18 +445,39 @@ function pathToWkt(path){
 }
 
 /**
+ * Normalize polygon wkt
+ */
+function normalizePolygonWkt(wkt) {
+    // replace multiple white space with single space
+    wkt = wkt.replace(/\s\s+/g, ' ')
+        .trim()
+        .toUpperCase();
+
+    // remove the POLYGON() outside
+    if (wkt.startsWith('POLYGON')) {
+        wkt = wkt.replace('POLYGON', '')
+            .trim()
+            .replace('(', '')
+            .replace(')', '')
+            .trim();
+    }
+
+    return wkt;
+}
+
+/**
  * Convert polygon string to lat lng array
  */
 function polygonWktToArray(wkt) {
+    let wktPath = normalizePolygonWkt(wkt);
     let path = [];
-
-    let values = wkt.replace(')', '');
-    values = values.replace('(', '');
-
-    let coords = values.split(',');
+    let coords = wktPath.replace('(', '')
+        .replace(')', '')
+        .trim()
+        .split(',');
 
     for (let i = 0; i < coords.length; i++) {
-        let coord = coords[i].split(' ');
+        let coord = coords[i].trim().split(' ');
         let lat = coord[1];
         let lng = coord[0];
 
