@@ -18,7 +18,7 @@ $map-selector-search-focus-box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
 // marker
 $map-selector-marker-border-color: $primary;
 $map-selector-marker-background-color: $primary;
-$map-selector-marker-glyph-color: $primary;
+$map-selector-marker-glyph-color: #fff;
 $map-selector-marker-icon-size: 1.2rem;
 
 @import '@javaabu/js-map-selector/src/scss/map-selector';
