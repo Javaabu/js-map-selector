@@ -25,6 +25,7 @@ let config = {
     zoom: 14,
     disabled: false,
     animate: true,
+    pinAnimationClass: 'map-selector-marker-drop',
     enableMarker: true,
     pinImage: null,
     pinIcon: null,
@@ -675,7 +676,7 @@ function mapSelector(elem, mapConfig = {}) {
     const intersectionObserver = new IntersectionObserver((entries) => {
         for (const entry of entries) {
             if (entry.isIntersecting) {
-                entry.target.classList.add('drop');
+                entry.target.classList.add('map-selector-marker-drop');
                 intersectionObserver.unobserve(entry.target);
             }
         }
@@ -967,7 +968,7 @@ function mapSelector(elem, mapConfig = {}) {
             // https://developers.google.com/maps/rootation/javascript/examples/advanced-markers-animation#maps_advanced_markers_animation-javascript
             content.style.opacity = '0';
             content.addEventListener('animationend', (event) => {
-                content.classList.remove('drop');
+                content.classList.remove('map-selector-marker-drop');
                 content.style.opacity = '1';
             });
 
