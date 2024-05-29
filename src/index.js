@@ -1014,19 +1014,19 @@ function mapSelector(elem, mapConfig = {}) {
      */
     function addInputEventListeners() {
         if (latInput) {
-            latInput.addEventListener('input', updateMapFromInputs);
+            latInput.addEventListener('input', updateMapFromCoordinateInputs);
         }
 
         if (lngInput) {
-            lngInput.addEventListener('input', updateMapFromInputs);
+            lngInput.addEventListener('input', updateMapFromCoordinateInputs);
         }
 
         if (radiusInput && mapConfig.enableRadius) {
-            radiusInput.addEventListener('input', updateMapFromInputs);
+            radiusInput.addEventListener('input', updateMapFromRadiusInputs);
         }
 
         if (polygonInput && mapConfig.enablePolygon) {
-            polygonInput.addEventListener('input', updateMapFromInputs);
+            polygonInput.addEventListener('input', updateMapFromPolygonInputs);
         }
     }
 
@@ -1085,7 +1085,7 @@ function mapSelector(elem, mapConfig = {}) {
     /**
      * Update map from inputs
      */
-    function updateMapFromInputs() {
+    function updateMapFromCoordinateInputs() {
         let lat = null;
         let lng = null;
 
@@ -1107,7 +1107,12 @@ function mapSelector(elem, mapConfig = {}) {
             updateSearchInput(coordinates);
             shouldUpdateCoordinateInput = true;
         }
+    }
 
+    /**
+     * Update map from inputs
+     */
+    function updateMapFromRadiusInputs() {
         if (radiusInput && mapConfig.enableRadius) {
             let radius = radiusInput.value;
 
@@ -1117,7 +1122,12 @@ function mapSelector(elem, mapConfig = {}) {
                 shouldUpdateRadiusInput = true;
             }
         }
+    }
 
+    /**
+     * Update map from inputs
+     */
+    function updateMapFromPolygonInputs() {
         if (polygonInput && mapConfig.enablePolygon) {
             let inputPath = polygonWktToArray(polygonInput.value);
 
