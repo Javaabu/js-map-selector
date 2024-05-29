@@ -1045,6 +1045,10 @@ function mapSelector(elem, mapConfig = {}) {
 
                 map.fitBounds(bounds);
 
+                if (! (polygon || circle)) {
+                    map.setZoom(16);
+                }
+
                 // update coordinates
                 updateCoordinateInputs(place.geometry.location);
             });
