@@ -5,12 +5,6 @@ sidebar_position: 1.0
 
 # JS Map Selector
 
-:::danger
-
-This package is currently under development. If anything works, that's a surprise.
-
-:::
-
 [JS Map Selector](https://github.com/Javaabu/js-map-selector) provides helpful JavaScript functionalities that you can use to display Google Maps inputs using a simple data attribute API.
 
 ```html
