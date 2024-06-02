@@ -173,6 +173,9 @@ class RouteMarker {
             gmpDraggable: false,
         });
 
+        // set anchor to center
+        this.marker.content.style.transform = 'translateY(50%)';
+
         return this;
     }
 
@@ -183,10 +186,10 @@ class RouteMarker {
         // calculate heading
         let newHeading = headingToNewPoint(this.position.lat(), this.position.lng(), position.lat(), position.lng());
         let routeMarker = this;
-        
+
         this.rotate(newHeading, function () {
             routeMarker.position = position;
-            routeMarker.marker.animateTo(position, {easing: 'easeInOutCubic'});
+            routeMarker.marker.animateTo(position, {easing: 'easeOutSine'});
         });
     }
 
