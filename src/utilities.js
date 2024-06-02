@@ -10,6 +10,51 @@ Utility functions
 const EARTH_COEFFICIENT = 111320.0; // m
 const EARTH_RADIUS = 6371; // km
 
+/**
+ * Heading for points
+ *
+ * @param lat1
+ * @param lon1
+ * @param lat2
+ * @param lon2
+ * @returns {number}
+ */
+function headingToNewPoint(lat1, lon1, lat2, lon2) {
+    // Calculate differences in coordinates
+    const dLon = lon2 - lon1;
+    const dLat = lat2 - lat1;
+
+    // Calculate the angle in radians with respect to the north direction (positive y-axis)
+    const angleRadians = Math.atan2(dLon, dLat); // Note: Math.atan2(dLon, dLat) instead of Math.atan2(dLat, dLon)
+
+    // Convert the angle to degrees
+    let angleDegrees = radiansToDegrees(angleRadians);
+
+    // Ensure the angle is in the range [0, 360)
+    if (angleDegrees < 0) {
+        angleDegrees += 360;
+    }
+
+    return angleDegrees;
+}
+
+/**
+ * Get the angle of a vector
+ * @param vector
+ * @returns {number}
+ */
+function vectorAngle(vector) {
+    const { x, y, z } = vector;
+
+    // Calculate the magnitude of the vector
+    const mag = magnitude(vector);
+
+    // Calculate the angle in radians
+    const angleRadians = Math.acos(z / mag);
+
+    // Convert the angle to degrees
+    return radiansToDegrees(angleRadians);
+}
 
 /**
  * Absolute modulo
@@ -30,6 +75,13 @@ function absModulo(x, y) {
  */
 function degreeToRadians(degree) {
     return degree * (Math.PI / 180)
+}
+
+/**
+ * Convert radians to degrees
+ */
+function radiansToDegrees(radians) {
+    return radians * (180 / Math.PI)
 }
 
 /**
@@ -94,7 +146,7 @@ function angleBetweenVectors(v1, v2) {
     const mag1 = magnitude(v1);
     const mag2 = magnitude(v2);
     const cosTheta = dot / (mag1 * mag2);
-    return Math.acos(cosTheta) * (180 / Math.PI); // Convert from radians to degrees
+    return radiansToDegrees(Math.acos(cosTheta)); // Convert from radians to degrees
 }
 
 /**
@@ -520,5 +572,7 @@ export {
     normalizePolygonWkt,
     polygonWktToArray,
     absModulo,
-    caculateRotationDirection
+    caculateRotationDirection,
+    radiansToDegrees,
+    headingToNewPoint
 };

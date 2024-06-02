@@ -1,7 +1,8 @@
 /**
  * Map Route
  */
-import {absModulo, caculateRotationDirection, getDataAtrributeConfigs} from './utilities.js';
+import {absModulo, caculateRotationDirection, getDataAtrributeConfigs, headingToNewPoint} from './utilities.js';
+import easing from './easing.js';
 
 
 let config = {
@@ -11,6 +12,128 @@ let config = {
     zoom: 14,
     mapId: 'DEMO_MAP_ID'
 };
+
+/**
+ * Setup marker functions
+ */
+function setupMarkerFunctions() {
+    // Animated Marker Movement. Robert Gerlach 2012-2013 https://github.com/combatwombat/marker-animate
+// MIT license
+//
+// params:
+// newPosition        - the new Position as google.maps.LatLng()
+// options            - optional options object (optional)
+// options.duration   - animation duration in ms (default 1000)
+// options.easing     - easing function from jQuery and/or the jQuery easing plugin (default 'linear')
+// options.complete   - callback function. Gets called, after the animation has finished
+// options.pan     - can be 'center', 'inbounds', or null. center keeps marker centered, in bounds keeps it in bounds (default null)
+    google.maps.marker.AdvancedMarkerElement.prototype.animateTo = function(newPosition, options) {
+        let defaultOptions = {
+            duration: 1000,
+            easing: 'linear',
+            complete: null,
+            pan: null
+        }
+        options = options || {};
+
+        // complete missing options
+        for (let key in defaultOptions) {
+            options[key] = options[key] || defaultOptions[key];
+        }
+
+        // throw exception if easing function doesn't exist
+        if (options.easing != 'linear') {
+            if (! easing[options.easing]) {
+                throw '"' + options.easing + '" easing function doesn\'t exist.';
+                return;
+            }
+        }
+
+        // make sure the pan option is valid
+        if (options.pan !== null) {
+            if (options.pan !== 'center' && options.pan !== 'inbounds') {
+                return;
+            }
+        }
+
+        window.requestAnimationFrame = window.requestAnimationFrame || window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame || window.msRequestAnimationFrame;
+        window.cancelAnimationFrame = window.cancelAnimationFrame || window.mozCancelAnimationFrame;
+
+        // save current position. prefixed to avoid name collisions. separate for lat/lng to avoid calling lat()/lng() in every frame
+        this.AT_startPosition_lat = this.position.lat;
+        this.AT_startPosition_lng = this.position.lng;
+        var newPosition_lat = newPosition.lat();
+        var newPosition_lng = newPosition.lng();
+        var newPoint = new google.maps.LatLng(newPosition.lat(), newPosition.lng());
+
+        if (options.pan === 'center') {
+            this.map.setCenter(newPoint);
+        }
+
+        if (options.pan === 'inbounds') {
+            if (!this.map.getBounds().contains(newPoint)) {
+                var mapbounds = this.map.getBounds();
+                mapbounds.extend(newPoint);
+                this.map.fitBounds(mapbounds);
+            }
+        }
+
+        // crossing the 180° meridian and going the long way around the earth?
+        if (Math.abs(newPosition_lng - this.AT_startPosition_lng) > 180) {
+            if (newPosition_lng > this.AT_startPosition_lng) {
+                newPosition_lng -= 360;
+            } else {
+                newPosition_lng += 360;
+            }
+        }
+
+        var animateStep = function(marker, startTime) {
+            var ellapsedTime = (new Date()).getTime() - startTime;
+            var durationRatio = ellapsedTime / options.duration; // 0 - 1
+            var easingDurationRatio = durationRatio;
+
+            // use jQuery easing if it's not linear
+            if (options.easing !== 'linear') {
+                easingDurationRatio = easing[options.easing](durationRatio, ellapsedTime, 0, 1, options.duration);
+            }
+
+            if (durationRatio < 1) {
+                var deltaPosition = new google.maps.LatLng(marker.AT_startPosition_lat + (newPosition_lat - marker.AT_startPosition_lat) * easingDurationRatio,
+                    marker.AT_startPosition_lng + (newPosition_lng - marker.AT_startPosition_lng) * easingDurationRatio);
+                marker.position = deltaPosition;
+
+                // use requestAnimationFrame if it exists on this browser. If not, use setTimeout with ~60 fps
+                if (window.requestAnimationFrame) {
+                    marker.AT_animationHandler = window.requestAnimationFrame(function() {
+                        animateStep(marker, startTime)
+                    });
+                } else {
+                    marker.AT_animationHandler = setTimeout(function() {
+                        animateStep(marker, startTime)
+                    }, 17);
+                }
+
+            } else {
+
+                marker.position = newPosition;
+
+                if (typeof options.complete === 'function') {
+                    options.complete();
+                }
+
+            }
+        }
+
+        // stop possibly running animation
+        if (window.cancelAnimationFrame) {
+            window.cancelAnimationFrame(this.AT_animationHandler);
+        } else {
+            clearTimeout(this.AT_animationHandler);
+        }
+
+        animateStep(this, (new Date()).getTime());
+    }
+}
 
 /**
  * Route marker
@@ -32,6 +155,7 @@ class RouteMarker {
 
     async init() {
         const {AdvancedMarkerElement, PinElement} = await google.maps.importLibrary('marker');
+        setupMarkerFunctions();
 
         this.elem = document.createElement('div');
 
@@ -53,9 +177,23 @@ class RouteMarker {
     }
 
     /**
+     * Move the marker
+     */
+    moveTo(position) {
+        // calculate heading
+        let newHeading = headingToNewPoint(this.position.lat(), this.position.lng(), position.lat(), position.lng());
+        let routeMarker = this;
+        
+        this.rotate(newHeading, function () {
+            routeMarker.position = position;
+            routeMarker.marker.animateTo(position, {easing: 'easeInOutCubic'});
+        });
+    }
+
+    /**
      * Rotate the marker the given heading
      */
-    rotate(heading) {
+    rotate(heading, onRotationEnded) {
         this.rotationDirection = caculateRotationDirection(heading, this.rotationTimer ? this.animationHeading : this.heading);
 
         let frameInterval = 1000 / this.config.frameRate
@@ -79,6 +217,10 @@ class RouteMarker {
             // stop animating when desired heading is reached
             if (imageIndex === routerMarker.headingImageIndex) {
                 clearInterval(routerMarker.rotationTimer);
+
+                if (onRotationEnded) {
+                    onRotationEnded();
+                }
             }
 
             if (routerMarker.rotationDirection < 0) {

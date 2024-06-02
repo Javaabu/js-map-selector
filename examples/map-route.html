@@ -67,6 +67,11 @@
                     imgPath: './img/truck'
                 });
 
+                // move marker to clicked position
+                google.maps.event.addListener(map, 'click', function (evt) {
+                    marker.moveTo(evt.latLng);
+                });
+
                 window.marker = marker;
             }
     });
