@@ -1,7 +1,7 @@
 /**
  * Map Route
  */
-import {getDataAtrributeConfigs} from './utilities.js';
+import {absModulo, caculateRotationDirection, getDataAtrributeConfigs} from './utilities.js';
 
 
 let config = {
@@ -13,11 +13,114 @@ let config = {
 };
 
 /**
+ * Route marker
+ */
+class RouteMarker {
+    static defaults = {
+        size: '120px',
+        degreesPerFrame: 6,
+        frameRate: 60
+    }
+
+    constructor(config) {
+        this.config = {...RouteMarker.defaults, ...config};
+        this.position = config.position || {lat: 0, lng: 0};
+        this.heading = config.heading || 0;
+
+        return this.init();
+    }
+
+    async init() {
+        const {AdvancedMarkerElement, PinElement} = await google.maps.importLibrary('marker');
+
+        this.elem = document.createElement('div');
+
+        this.imgElem = document.createElement('img');
+        this.imgElem.classList.add('map-selector-route-marker');
+        this.imgElem.src = this.getHeadingImage(this.heading);
+        this.imgElem.style.height = this.config.size;
+
+        this.elem.appendChild(this.imgElem);
+
+        this.marker = new AdvancedMarkerElement({
+            map: this.config.map,
+            content: this.elem,
+            position: this.position,
+            gmpDraggable: false,
+        });
+
+        return this;
+    }
+
+    /**
+     * Rotate the marker the given heading
+     */
+    rotate(heading) {
+        this.rotationDirection = caculateRotationDirection(heading, this.rotationTimer ? this.animationHeading : this.heading);
+
+        let frameInterval = 1000 / this.config.frameRate
+
+        // if it's already animating, clear it
+        if (this.rotationTimer) {
+            clearInterval(this.rotationTimer);
+        } else {
+            this.animationHeading = this.getHeadingImageIndex(this.heading) * this.config.degreesPerFrame;
+        }
+
+        this.heading = heading;
+        this.headingImageIndex = this.getHeadingImageIndex(heading);
+
+        let routerMarker = this;
+
+        this.rotationTimer = setInterval(function () {
+            let imageIndex = routerMarker.getHeadingImageIndex(routerMarker.animationHeading);
+            routerMarker.imgElem.src = routerMarker.getHeadingImageByIndex(imageIndex);
+
+            // stop animating when desired heading is reached
+            if (imageIndex === routerMarker.headingImageIndex) {
+                clearInterval(routerMarker.rotationTimer);
+            }
+
+            if (routerMarker.rotationDirection < 0) {
+                // anti clockwise
+                routerMarker.animationHeading -= routerMarker.config.degreesPerFrame;
+            } else {
+                routerMarker.animationHeading += routerMarker.config.degreesPerFrame;
+            }
+        }, frameInterval);
+
+    }
+
+    /**
+     * Get the heading index
+     */
+    getHeadingImageIndex(heading) {
+        return Math.floor(absModulo(heading, 360) / this.config.degreesPerFrame);
+    }
+
+    /**
+     * Get the image index
+     */
+    getHeadingImageByIndex(index) {
+        return this.config.imgPath + '/' + index + '.png';
+    }
+
+    /**
+     * Get the image for the given heading
+     */
+    getHeadingImage(heading) {
+        // convert the heading to index
+        let index = this.getHeadingImageIndex(heading);
+
+        return this.getHeadingImageByIndex(index);
+    }
+
+}
+
+/**
  * Route map class
  */
 class RouteMap {
-    config = {};
-
     constructor(elem, options) {
         this.config = {...config, ...options};
         this.elem = elem;
@@ -30,7 +133,7 @@ class RouteMap {
      *
      * @returns {Promise<void>}
      */
-    async initialize() {
+    async init() {
         const {Map} = await google.maps.importLibrary('maps');
 
         let mapCenter = new google.maps.LatLng(this.config.lat, this.config.lng);
@@ -87,7 +190,7 @@ function mapRoute(elem, mapConfig = {}) {
 
     let routeMap = new RouteMap(elem.querySelector(mapConfig.mapRoute), mapConfig);
 
-    window.addEventListener('load', () => routeMap.initialize());
+    window.addEventListener('load', () => routeMap.init());
 }
 
 /**
@@ -116,5 +219,7 @@ export {
     mapRoute,
     bind,
     init,
+    RouteMap,
+    RouteMarker,
     config
 };

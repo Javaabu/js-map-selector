@@ -31,16 +31,10 @@
 
             <div class="col">
                 <div class="card">
-                    <div class="card-body py-4">
+                    <div class="card-body py-4" id="route-map" >
                         <h4 class="card-title mb-4">Polygon Only Display</h4>
 
-                        <div data-map-route="true"
-                             data-lat="4.175804"
-                             data-lng="73.509337"
-                        >
-                            <div class="map-selector-route-map bg-light rounded"></div>
-                        </div>
-
+                        <div class="map-selector-route-map bg-light rounded"></div>
                     </div>
                 </div>
             </div>
@@ -62,7 +56,20 @@
 <script type="module">
     import { mapRoute } from '../src/index.js?v=2.0.0';
 
-    mapRoute.init();
+    // without using data attribute
+    mapRoute.mapRoute(document.getElementById('route-map'), {
+            lat: 4.175804, 
+            lng: 73.509337,
+            onInit: async function (map) {
+                let marker = await new mapRoute.RouteMarker({
+                    map: map,
+                    position: map.center,
+                    imgPath: './img/truck'
+                });
+
+                window.marker = marker;
+            }
+    });
 </script>
 
 </body>

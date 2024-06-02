@@ -12,6 +12,20 @@ const EARTH_RADIUS = 6371; // km
 
 
 /**
+ * Absolute modulo
+ * https://stackoverflow.com/questions/42568780/calculate-absolute-distance-of-two-rotation-degrees-as-a-number-in-javascript
+ */
+function absModulo(x, y) {
+    let xPrime = x;
+
+    while (xPrime < 0) {
+        xPrime += y; // ASSUMES y > 0
+    }
+
+    return xPrime % y;
+}
+
+/**
  * Convert degree to radius
  */
 function degreeToRadians(degree) {
@@ -451,6 +465,35 @@ function polygonWktToArray(wkt) {
     return path;
 }
 
+/**
+ * Determine rotation direction
+ */
+function caculateRotationDirection(heading, newHeading) {
+    // Normalize the degrees to be within 0-360 and caculate the difference
+    // https://stackoverflow.com/questions/42568780/calculate-absolute-distance-of-two-rotation-degrees-as-a-number-in-javascript
+    let difference = absModulo(heading, 360) - absModulo(newHeading, 360);
+
+    // Adjust the difference for the shortest rotation
+    if (difference > 180) {
+        difference -= 360
+    } else if (difference < -180) {
+        difference += 360
+    }
+
+    let direction;
+
+    // Determine direction
+    if (difference > 0) {
+        direction = 1; // 'clockwise'
+    } else if (difference < 0) {
+        direction = -1; // 'counterclockwise'
+    } else {
+        direction = 0; // No rotation needed
+    }
+
+    return direction;
+}
+
 export {
     EARTH_COEFFICIENT,
     EARTH_RADIUS,
@@ -476,4 +519,6 @@ export {
     pathToWkt,
     normalizePolygonWkt,
     polygonWktToArray,
+    absModulo,
+    caculateRotationDirection
 };
