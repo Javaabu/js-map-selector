@@ -3,17 +3,18 @@ title: Config Options
 sidebar_position: 2
 ---
 
-All these config options can be set on individual `mapSelector` elements using data attributes with the config name in
+All these config options can be set on individual `mapInput` elements using data attributes with the config name in
 kebab case. For example to customise the `pinBackground`, you can use the `data-pin-background` attribute.
 
-To override global config options, you can do so before `mapSelector` is initialized. For example, to change the default `iconPrefix`:
+To override global config options, you can do so before `mapInput` is initialized. For example, to change the
+default `iconPrefix`:
 
 ```javascript
-import * as mapSelector from '@javaabu/js-map-selector';
+import {mapInput} from '@javaabu/js-map-selector';
 
-mapSelector.config.iconPrefix = 'zmdi';
+mapInput.config.iconPrefix = 'zmdi';
 
-mapSelector.init();
+mapInput.init();
 ```
 
 | Config Option            | Type      | Default                       | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
@@ -58,3 +59,4 @@ mapSelector.init();
 | **polygonStrokeWeight**  | _Integer_ | `3`                           | Thickness of the polygon border.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 | **polygonFillColor**     | _String_  | `'#FF5722'`                   | Background color of the polygon as a CSS color string.                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | **polygonFillOpacity**   | _Number_  | `0.2`                         | Opacity of the polygon background.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| **mapId**                | _String_  | `'DEMO_MAP_ID'`               | Id of the map if using a customized Google Map                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |

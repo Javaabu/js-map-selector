@@ -1,0 +1,11 @@
+{
+    "position": 1.3,
+    "label": "mapInput",
+    "collapsible": true,
+    "collapsed": false,
+    "link": {
+        "type": "generated-index",
+        "slug": "/js-map-selector/_categories/map-input",
+        "description": "Details of all the features offered by the mapInput module"
+    }
+}
