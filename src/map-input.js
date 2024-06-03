@@ -11,7 +11,7 @@ import {
     isValidRadius,
     polygonWktToArray,
     pathToWkt
-} from './utilities.js';
+} from './utilities';
 
 let config = {
     iconPrefix: 'fa',

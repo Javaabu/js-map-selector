@@ -1,8 +1,8 @@
 /**
  * Map Route
  */
-import {absModulo, caculateRotationDirection, getDataAtrributeConfigs, headingToNewPoint} from './utilities.js';
-import easing from './easing.js';
+import {absModulo, caculateRotationDirection, getDataAtrributeConfigs, headingToNewPoint} from './utilities';
+import easing from './easing';
 
 
 let config = {

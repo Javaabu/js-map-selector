@@ -1,5 +1,5 @@
-import * as mapInput from './map-input.js';
-import * as mapRoute from './map-route.js';
+import * as mapInput from './map-input';
+import * as mapRoute from './map-route';
 
 export {
     mapInput,
