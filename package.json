@@ -1,6 +1,6 @@
 {
   "name": "@javaabu/js-map-selector",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "JavaScript Google Map input selector",
   "main": "src/index.js",
   "files": [
