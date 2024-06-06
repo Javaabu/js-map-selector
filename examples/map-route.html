@@ -31,8 +31,18 @@
 
             <div class="col">
                 <div class="card">
+                    <div class="card-body py-4" id="lc-route-map" >
+                        <h4 class="card-title mb-4">Landing Craft</h4>
+
+                        <div class="map-selector-route-map bg-light rounded"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col">
+                <div class="card">
                     <div class="card-body py-4" id="route-map" >
-                        <h4 class="card-title mb-4">Polygon Only Display</h4>
+                        <h4 class="card-title mb-4">Truck Map</h4>
 
                         <div class="map-selector-route-map bg-light rounded"></div>
                     </div>
@@ -74,8 +84,28 @@
                     marker.moveTo(evt.latLng);
                 });
 
-                window.marker = marker;
+                //window.marker = marker;
             }
+    });
+
+    // without using data attribute
+    mapRoute.mapRoute(document.getElementById('lc-route-map'), {
+        lat: 4.175804,
+        lng: 73.509337,
+        onInit: async function (map) {
+            let marker = await new mapRoute.RouteMarker({
+                map: map,
+                position: map.center,
+                imgPath: './img/landing-craft'
+            });
+
+            // move marker to clicked position
+            google.maps.event.addListener(map, 'click', function (evt) {
+                marker.moveTo(evt.latLng);
+            });
+
+            window.marker = marker;
+        }
     });
 </script>
 
