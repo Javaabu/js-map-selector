@@ -549,10 +549,13 @@ function mapInput(elem, mapConfig = {}) {
         if (mapConfig.animate) {
             // https://developers.google.com/maps/rootation/javascript/examples/advanced-markers-animation#maps_advanced_markers_animation-javascript
             content.style.opacity = '0';
-            content.addEventListener('animationend', (event) => {
-                content.classList.remove('map-selector-marker-drop');
-                content.style.opacity = '1';
-            });
+
+            if (content.parentElement) {
+                content.parentElement.addEventListener('animationend', (event) => {
+                    content.classList.remove('map-selector-marker-drop');
+                    content.style.opacity = '1';
+                });
+            }
 
             content.style.setProperty('--delay-time', '0.1s');
             intersectionObserver.observe(content);
