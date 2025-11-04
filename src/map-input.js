@@ -535,15 +535,19 @@ function mapInput(elem, mapConfig = {}) {
             pinElem = pin.element;
         }
 
-
+        // NOTE: Wrapping gmp-pin with a div. The new update does not allow addEventListener on gmp-pin
+        const pinWrapper = document.createElement('div');
+        pinWrapper.classList.add('custom-pin-wrapper');
+        pinWrapper.appendChild(pinElem);
+        
         marker = new AdvancedMarkerElement({
             map: map,
-            content: pinElem,
+            content: pinWrapper,
             position: coordinates,
             gmpDraggable: !mapConfig.disabled,
         });
 
-        const content = marker.content;
+        const content = pinWrapper;
         content.classList.add(mapConfig.pinClass);
 
         if (mapConfig.animate) {
