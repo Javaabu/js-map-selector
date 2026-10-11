@@ -12,7 +12,7 @@
 </div>
 ```
 
-See a demo of this package in action [here](https://javaabu.github.io/js-map-selector/).
+Live demos are available at [https://javaabu.github.io/js-map-selector](https://javaabu.github.io/js-map-selector/).
 
 ## Hosting the demos on GitHub Pages
 
@@ -30,7 +30,7 @@ change on `main`. No dependency installation or bundler is needed.
 4. Push the workflow to `main`, or run **Deploy demos to GitHub Pages** manually
    from the **Actions** tab after updating the secret.
 
-The demo menu will be at `https://javaabu.github.io/js-map-selector/`, with the
+The demo menu is at `https://javaabu.github.io/js-map-selector/`, with the
 individual demos under `/js-map-selector/examples/`. The API key is written into
 the published JavaScript and is visible to visitors; the secret keeps it out of
 Git, while Google's website and API restrictions control its use.
